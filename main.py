@@ -33,11 +33,18 @@ class MyHandler(server.Handler):
                 if command.command == 'note_on':
                     # print(chn)
                     key = command.params.key.__int__()
-                    velocity = command.params.velocity
+                    velocity = command.params.veloityc
                     rob = np.where(notes == key)[0]
                     if len(rob) > 0:
                         print(int(rob))
                         qList[int(rob)].put(1)
+            if chn == 12:  # this means its channel 13!!!!!
+                if command.command == 'note_on':
+                    # print(chn)
+                    key = command.params.key.__int__()
+                    velocity = command.params.velocity
+                    for q in qList:
+                        q.put(2)
                     # print('key {} with velocity {}'.format(key, velocity))
                     # q.put(velocity)
 
@@ -53,7 +60,7 @@ def setup():
         arms[a].clean_error()
         arms[a].set_mode(0)
         arms[a].set_state(0)
-        # curIP = IP[a]
+        curIP = IP[a]
         # arms[a].set_servo_angle(angle=curIP, wait=False, speed=10, acceleration=0.25, is_radian=False)
 
         arms[a].set_servo_angle(angle=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], wait=False, speed=10, acceleration=0.25, is_radian=False)
@@ -67,7 +74,7 @@ def setup2():
 
 def fifth_poly(q_i, q_f, t):
     # time/0.005
-    traj_t = np.arange(0, t, 0.002)
+    traj_t = np.arange(0, t, 0.004)
     dq_i = 0
     dq_f = 0
     ddq_i = 0
@@ -91,12 +98,30 @@ def strumbot(numarm, traj):
         j_angles[4] = traj[i]
         arms[numarm].set_servo_angle_j(angles=j_angles, is_radian=False)
         tts = time.time() - start_time
-        sleep = 0.002 - tts
+        sleep = 0.004 - tts
         print(j_angles, numarm)
-        if tts > 0.002:
+        if tts > 0.004:
             print(tts)
             sleep = 0
         time.sleep(sleep)
+
+
+def prepGesture(numarm, traj):
+    pos = IP[numarm]
+    j_angles = pos.copy()
+    track_time = time.time()
+    initial_time = time.time()
+    for i in range(len(traj)):
+        # run command
+        j_angles[1] = pos[1] + traj[i]
+        j_angles[3] = pos[3] + traj[i]
+        arms[numarm].set_servo_angle_j(angles=j_angles, is_radian=False)
+        print(j_angles)
+        while track_time < initial_time + 0.004:
+            track_time = time.time()
+            time.sleep(0.0001)
+        initial_time += 0.004
+
 
 
 def strummer(inq,num):
@@ -104,12 +129,19 @@ def strummer(inq,num):
     uptraj = fifth_poly(-strumD/2, strumD/2, speed)
     downtraj = fifth_poly(strumD/2, -strumD/2, speed)
     both = [uptraj, downtraj]
+    tension = fifth_poly(0, -20, 0.5)
+    release = fifth_poly(-20, 0, 0.75)
     while True:
-        inq.get()
+        play = inq.get()
         print("got!")
-        direction = i % 2
-        strumbot(num, both[direction])
-        i += 1
+        if play == 1:
+            direction = i % 2
+            strumbot(num, both[direction])
+            i += 1
+        elif play == 2:
+            prepGesture(num, tension)
+            time.sleep(0.25)
+            prepGesture(num, release)
 
 
 # Press the green button in the gutter to run the script.
@@ -126,9 +158,9 @@ if __name__ == '__main__':
     speed = 0.25
     IP0 = [-1, 87.1, -2, 126.5, -strumD/2, 51.7, -45]
     IP1 = [2.1, 86.3, 0, 127.1, -strumD/2, 50.1, -45]
-    IP2 = [1.5, 81.6, 0.0, 120, -strumD/2, 53.75, -45]
+    IP2 = [1.5, 81.6, 0.0, 120, -strumD/2, 53.5, -45]
     IP3 = [2.5, 81, 0, 117.7, -strumD/2, 50.5, -45]
-    IP4 = [-1.6, 81.8, 0, 120, -strumD/2, 50.13, -45]
+    IP4 = [-3.9, 65, 3.5, 100.3, -strumD/2, 42.7, 101.1]                  # [-1.6, 81.8, 0, 120, -strumD/2, 50.13, -45]
     IP5 = []
     notes = np.array([64, 60, 69, 55, 62])
 
@@ -168,6 +200,12 @@ if __name__ == '__main__':
     xArm2.start()
     xArm3.start()
     xArm4.start()
+    # tension = fifth_poly(0, -10, 0.5)
+    # print(tension)
+    input("TEST")
+    # time.sleep(5)
+    # q1.put(2)
+    # input()
 
     rtp_midi = RtpMidi(ROBOT, MyHandler(), PORT)
     print("test")
