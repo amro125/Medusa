@@ -60,6 +60,7 @@ if __name__ == '__main__':
     strumD = 30
     speed = 0.25
     global pos
+    pos = [-4.3, 65, 3.5, 100.3, -strumD/2, 42.7, 90]
     # pos =[-4.9, 65, 3.5, 100.3, -strumD/2, 43.4, 92.3]
     # pos = [-4.9, 45, 3.5, 70.7, -strumD/2, 43.4, 92.3]
     # pos = [-4.9, 35, 3.5, 57.1, -strumD / 2, 43.4, 92.3]
@@ -68,6 +69,7 @@ if __name__ == '__main__':
     # print(len(np.where(test == 4)[0]))
     setup()
     print(pos)
+    print(arm1.get_position())
     input("test strumming")
     arm1.set_mode(0)
     arm1.set_state(0)
@@ -81,8 +83,9 @@ if __name__ == '__main__':
     downtraj = fifth_poly(strumD/2, -strumD/2, speed)
     both = [uptraj, downtraj]
     while True:
-        input()
+        # input()
         print("got!")
         direction = i % 2
         strumbot(both[direction])
         i += 1
+        time.sleep(2)

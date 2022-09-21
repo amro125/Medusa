@@ -10,7 +10,7 @@ from queue import Queue
 from threading import Thread
 from xarm.wrapper import XArmAPI
 
-
+# RTP MIDI STUFF
 class MyHandler(server.Handler):
 
     def on_peer_connected(self, peer):
@@ -64,14 +64,8 @@ def setup():
         # curIP = IP[a]
         # arms[a].set_servo_angle(angle=curIP, wait=False, speed=10, acceleration=0.25, is_radian=False)
 
-        arms[a].set_servo_angle(angle=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], wait=False, speed=10, acceleration=0.25, is_radian=False)
+        arms[a].set_servo_angle(angle=[0.0, 0.0, 0.0, 90, 0.0, 0.0, 0.0], wait=False, speed=10, acceleration=0.25, is_radian=False)
 
-def setup2():
-    for a in range(len(arms)):
-        curIP = IP[a]
-        arms[a].set_servo_angle(angle=curIP, wait=False, speed=10, acceleration=0.25, is_radian=False)
-
-        # print(curIP)
 
 def fifth_poly(q_i, q_f, t):
     # time/0.005
@@ -99,29 +93,11 @@ def strumbot(numarm, traj):
         # run command
         start_time = time.time()
         j_angles[4] = traj[i]
-        arms[numarm].set_servo_angle_j(angles=j_angles, is_radian=False)
+        #arms[numarm].set_servo_angle_j(angles=j_angles, is_radian=False)
         while track_time < initial_time + 0.004:
             track_time = time.time()
             time.sleep(0.0001)
         initial_time += 0.004
-
-
-def prepGesture(numarm, traj):
-    pos = IP[numarm]
-    j_angles = pos.copy()
-    track_time = time.time()
-    initial_time = time.time()
-    for i in range(len(traj)):
-        # run command
-        j_angles[1] = pos[1] + traj[i]
-        j_angles[3] = pos[3] + traj[i]
-        arms[numarm].set_servo_angle_j(angles=j_angles, is_radian=False)
-        # print(j_angles)
-        while track_time < initial_time + 0.004:
-            track_time = time.time()
-            time.sleep(0.0001)
-        initial_time += 0.004
-
 
 
 def strummer(inq,num):
@@ -136,12 +112,13 @@ def strummer(inq,num):
         print("got!")
         if play == 1:
             direction = i % 2
-            strumbot(num, both[direction])
+            #strumbot(num, both[direction])
             i += 1
         elif play == 2:
-            prepGesture(num, tension)
+            #prepGesture(num, tension)
             time.sleep(0.25)
-            prepGesture(num, release)
+            #prepGesture(num, release)
+
 
 
 # Press the green button in the gutter to run the script.
@@ -156,66 +133,32 @@ if __name__ == '__main__':
 
     strumD = 30
     speed = 0.25
-    IP0 = [-1, 87.1, -2, 126.5, -strumD/2, 51.7, -45]
-    IP1 = [2.1, 86.3, 0, 127.1, -strumD/2, 50.1, -45]
-    IP2 = [1.5, 81.6, 0.0, 120, -strumD/2, 53.5, -45]
-    IP3 = [2.5, 81, 0, 117.7, -strumD/2, 50.5, -45]
-    IP4 = [-3.9, 65, 3.5, 100.3, -strumD/2, 42.7, 101.1]                  # [-1.6, 81.8, 0, 120, -strumD/2, 50.13, -45]
-    IP5 = []
+    IP = [0, 0, 0, 90, 0, 0, 0]
+
     notes = np.array([64, 60, 69, 55, 62])
 
 
-    IP = [IP0, IP1, IP2, IP3, IP4]
-    arm0 = XArmAPI('192.168.1.208')
-    arm1 = XArmAPI('192.168.1.226')
-    arm2 = XArmAPI('192.168.1.244')
-    arm3 = XArmAPI('192.168.1.203')
-    arm4 = XArmAPI('192.168.1.237')
-    arms = [arm0, arm1, arm2, arm3, arm4]
+    arm0 = XArmAPI('192.168.1.236')
+
+    arms = [arm0]
     # arms = [arm1]
     totalArms = len(arms)
     setup()
     input("lets go")
-    setup2()
-    input("letsgo again")
+
     for a in arms:
         a.set_mode(1)
         a.set_state(0)
 
     q0 = Queue()
-    q1 = Queue()
-    q2 = Queue()
-    q3 = Queue()
-    q4 = Queue()
-    qList = [q0, q1, q2, q3, q4]
+    qList = [q0]
 
     xArm0 = Thread(target=strummer, args=(q0, 0,))
-    xArm1 = Thread(target=strummer, args=(q1, 1,))
-    xArm2 = Thread(target=strummer, args=(q2, 2,))
-    xArm3 = Thread(target=strummer, args=(q3, 3,))
-    xArm4 = Thread(target=strummer, args=(q4, 4,))
 
     xArm0.start()
-    xArm1.start()
-    xArm2.start()
-    xArm3.start()
-    xArm4.start()
-    # tension = fifth_poly(0, -10, 0.5)
-    # print(tension)
-    input("TEST")
-    # time.sleep(5)
-    # q1.put(2)
-    # input()
 
+    input("start RTP MIDI")
     rtp_midi = RtpMidi(ROBOT, MyHandler(), PORT)
     print("test")
     rtp_midi.run()
-
-    # while True:
-    #     strumnum = input("which robot")
-    #
-    #     qList[0].put(0)
-
-
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    print("test2")
