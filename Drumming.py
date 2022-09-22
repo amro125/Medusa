@@ -28,6 +28,7 @@ class MyHandler(server.Handler):
             if chn == 1:  # this means its channel 2!!!!!
                 if command.command == 'note_on':
                     print("YEYE START")
+                    q0.put(1)
 
 
             if chn == 13:  # this means its channel 14!!!!!
@@ -64,7 +65,7 @@ def setup():
         # curIP = IP[a]
         # arms[a].set_servo_angle(angle=curIP, wait=False, speed=10, acceleration=0.25, is_radian=False)
 
-        arms[a].set_servo_angle(angle=[0.0, 0.0, 0.0, 90, 0.0, 0.0, 0.0], wait=False, speed=10, acceleration=0.25, is_radian=False)
+        arms[a].set_servo_angle(angle=[0.0, 23.1, 0.0, 51.4, 0.0, -60.8, 0.0], wait=False, speed=10, acceleration=0.25, is_radian=False)
 
 
 def fifth_poly(q_i, q_f, t):
@@ -84,39 +85,53 @@ def fifth_poly(q_i, q_f, t):
     return traj_pos
 
 
-def strumbot(numarm, traj):
-    pos = IP[numarm]
-    j_angles = pos
+def strumbot(trajz, trajp):
+
+    #j_angles = pos
     track_time = time.time()
     initial_time = time.time()
-    for i in range(len(traj)):
+    for i in range(len(trajz)):
         # run command
-        start_time = time.time()
-        j_angles[4] = traj[i]
+        #start_time = time.time()
+        #j_angles[4] = traj[i]
         #arms[numarm].set_servo_angle_j(angles=j_angles, is_radian=False)
+        mvpose = [492,0,trajz[i],180,trajp[i],0]
+        print(mvpose[2])
+        arms[0].set_servo_cartesian(mvpose, speed=100, mvacc=2000)
         while track_time < initial_time + 0.004:
             track_time = time.time()
             time.sleep(0.0001)
         initial_time += 0.004
 
 
-def strummer(inq,num):
-    i = 0
-    uptraj = fifth_poly(-strumD/2, strumD/2, speed)
-    downtraj = fifth_poly(strumD/2, -strumD/2, speed)
-    both = [uptraj, downtraj]
-    tension = fifth_poly(0, -20, 0.5)
-    release = fifth_poly(-20, 0, 0.75)
+def drummer(inq,num):
+    i = 1
+    #uptraj = fifth_poly(-strumD/2, strumD/2, speed)
+    #downtraj = fifth_poly(strumD/2, -strumD/2, speed)
+    #both = [uptraj, downtraj]
+    #tension = fifth_poly(0, -20, 0.5)
+    #release = fifth_poly(-20, 0, 0.75)
+
+    downtrajz= fifth_poly(325, 20, .3)
+    uptrajz= fifth_poly(20, 325, .3)
+    downtrajp= fifth_poly(-89, -36, .3)
+    uptrajp = fifth_poly(-36, -89, .3)
+    trajz = np.append(downtrajz, uptrajz)
+    trajp = np.append(downtrajp, uptrajp)
+
     while True:
         play = inq.get()
         print("got!")
-        if play == 1:
-            direction = i % 2
-            #strumbot(num, both[direction])
-            i += 1
-        elif play == 2:
+        strumbot(trajz, trajp)
+        #if i == 1:
+            #direction = i % 2
+            #strumbot(downtrajz, downtrajp)
+            #i += 1
+        #elif i == 2:
+            #strumbot(uptrajz, uptrajp)
+            #i = 1
             #prepGesture(num, tension)
-            time.sleep(0.25)
+            #time.sleep(0.25)
             #prepGesture(num, release)
 
 
@@ -133,9 +148,9 @@ if __name__ == '__main__':
 
     strumD = 30
     speed = 0.25
-    IP = [0, 0, 0, 90, 0, 0, 0]
+    IP = [0, 23.1, 0, 51.4, 0, -60.8, 0]
 
-    notes = np.array([64, 60, 69, 55, 62])
+    #notes = np.array([64, 60, 69, 55, 62])
 
 
     arm0 = XArmAPI('192.168.1.236')
@@ -153,7 +168,7 @@ if __name__ == '__main__':
     q0 = Queue()
     qList = [q0]
 
-    xArm0 = Thread(target=strummer, args=(q0, 0,))
+    xArm0 = Thread(target=drummer, args=(q0, 0,))
 
     xArm0.start()
 
