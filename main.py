@@ -35,6 +35,11 @@ class MyHandler(server.Handler):
                     print("DRUMMO")
                     dq1.put(1)
 
+            if chn == 3:  # this means its channel 4 !!!!!
+                if command.command == 'note_on':
+                    print("DRUMMO2")
+                    dq2.put(1)
+
 
             if chn == 13:  # this means its channel 14!!!!!
                 if command.command == 'note_on':
@@ -76,8 +81,13 @@ def drummer(inq,num):
     #trajz = np.append(downtrajz, uptrajz)
     #trajp = np.append(downtrajp, uptrajp)
 
-    trajz = spline_poly(325, 18, .08, .04)
-    trajp = spline_poly(-89, -23, .08, .04)
+    #for bodharn
+    #trajz = spline_poly(325, 35, .08, .04)
+    #trajp = spline_poly(-89, -23, .08, .04)
+
+    #for snare
+    trajz = spline_poly(325, 60, .08, .08)
+    trajp = spline_poly(-89, -23, .08, .08)
 
     while True:
         play = inq.get()
@@ -254,11 +264,14 @@ def strummer(inq,num):
     tension = fifth_poly(0, -20, 0.5)
     release = fifth_poly(-20, 0, 0.75)
     while True:
-        play = inq.get()
+        play = inq.get() #WHERE I AM GETTING A PLAY A NOT COMMAND
+
         print("got!")
         if play == 1:
             direction = i % 2
-            time.sleep(.1)
+            time.sleep(delayarray[direction, num]) #time delay before playing
+            print(num)
+            print(delayarray[0, num])
             strumbot(num, both[direction])
             i += 1
         elif play == 2:
@@ -283,19 +296,21 @@ if __name__ == '__main__':
     IP1 = [2.1, 86.3, 0, 127.1, -strumD/2, 50.1, -45]
     IP2 = [1.5, 81.6, 0.0, 120, -strumD/2, 54.2, -45]
     IP3 = [2.5, 81, 0, 117.7, -strumD/2, 50.5, -45]
-    IP4 = pos = [-1.6, 81.8, 0, 120, -strumD/2, 50.65, -45]         # [-3.9, 65, 3.5, 100.3, -strumD/2, 42.7, 101.1]
+    IP4 = [-1.6, 81.8, 0, 120, -strumD/2, 50.65, -45]         # [-3.9, 65, 3.5, 100.3, -strumD/2, 42.7, 101.1]
     DRUM1 = [0.0, 23.1, 0.0, 51.4, 0.0, -60.8, 0.0] #DRUMMMING
+    DRUM2 = [0.0, 23.1, 0.0, 51.4, 0.0, -60.8, 0.0] #DRUMMMING
     notes = np.array([64, 60, 69, 55, 62])
 
 
-    IP = [IP0, IP1, IP2, IP3, IP4, DRUM1]
+    IP = [IP0, IP1, IP2, IP3, IP4, DRUM1, DRUM2]
     arm0 = XArmAPI('192.168.1.208')
     arm1 = XArmAPI('192.168.1.226')
     arm2 = XArmAPI('192.168.1.244')
     arm3 = XArmAPI('192.168.1.203')
     arm4 = XArmAPI('192.168.1.237')
     drumarm1 = XArmAPI('192.168.1.236')
-    arms = [arm0, arm1, arm2, arm3, arm4, drumarm1 ]
+    drumarm2 = XArmAPI('192.168.1.204')
+    arms = [arm0, arm1, arm2, arm3, arm4, drumarm1, drumarm2]
     # arms = [arm1]
     totalArms = len(arms)
     setup()
@@ -312,14 +327,19 @@ if __name__ == '__main__':
     q3 = Queue()
     q4 = Queue()
     dq1 = Queue()
-    qList = [q0, q1, q2, q3, q4, dq1]
+    dq2 = Queue()
+    qList = [q0, q1, q2, q3, q4, dq1, dq2]
+    delayarray = np.array([[0.15, 0.15, 0.15, 0.15, 0.15, 0.0, 0.0], [0.1, 0.15, 0.1, 0.15, 0.125, 0.0, 0.0]])
 
-    xArm0 = Thread(target=strummer, args=(q0, 0,))
-    xArm1 = Thread(target=strummer, args=(q1, 1,))
-    xArm2 = Thread(target=strummer, args=(q2, 2,))
-    xArm3 = Thread(target=strummer, args=(q3, 3,))
-    xArm4 = Thread(target=strummer, args=(q4, 4,))
+    #nums left to right
+
+    xArm0 = Thread(target=strummer, args=(q0, 0,)) #num 2
+    xArm1 = Thread(target=strummer, args=(q1, 1,)) #num 4
+    xArm2 = Thread(target=strummer, args=(q2, 2,)) #num 1
+    xArm3 = Thread(target=strummer, args=(q3, 3,)) #num 3
+    xArm4 = Thread(target=strummer, args=(q4, 4,)) #num 5
     drumArm1 = Thread(target=drummer, args=(dq1, 5,))
+    drumArm2 = Thread(target=drummer, args=(dq2, 6,))
 
     xArm0.start()
     xArm1.start()
@@ -327,6 +347,7 @@ if __name__ == '__main__':
     xArm3.start()
     xArm4.start()
     drumArm1.start()
+    drumArm2.start()
     # tension = fifth_poly(0, -10, 0.5)
     # print(tension)
     input("TEST")
@@ -338,10 +359,10 @@ if __name__ == '__main__':
     print("test")
     rtp_midi.run()
 
-    # while True:
-    #     strumnum = input("which robot")
-    #
-    #     qList[0].put(0)
+    #w/out rtp midi
+    while True:
+        dq1.put(1)
+        time.sleep(1.0)
 
 
 

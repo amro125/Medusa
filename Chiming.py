@@ -160,19 +160,19 @@ def fifth_poly(q_i, q_f, t):
     return traj_pos
 
 
-def drumbot(trajz, trajp, arm):
+def chimbot(traj1, traj2, traj4, traj6, arm):
 
     #j_angles = pos
     track_time = time.time()
     initial_time = time.time()
-    for i in range(len(trajz)):
+    for i in range(len(traj1)):
         # run command
         #start_time = time.time()
         #j_angles[4] = traj[i]
         #arms[numarm].set_servo_angle_j(angles=j_angles, is_radian=False)
-        mvpose = [492,0,trajz[i],180,trajp[i],0]
-        #print(mvpose[2])
-        arms[arm].set_servo_cartesian(mvpose, speed=100, mvacc=2000)
+        jointangles = [traj1[i],traj2[i],0,traj4[i],0,traj6[i],0]
+        #print(traj4[i])
+        arms[arm].set_servo_angle_j(angles=jointangles, is_radian=False)
         while track_time < initial_time + 0.004:
             track_time = time.time()
             time.sleep(0.0001)
@@ -180,8 +180,7 @@ def drumbot(trajz, trajp, arm):
 
 
 def drummer(inq,num):
-
-    i = 0
+    #i = 1
     #uptraj = fifth_poly(-strumD/2, strumD/2, speed)
     #downtraj = fifth_poly(strumD/2, -strumD/2, speed)
     #both = [uptraj, downtraj]
@@ -196,41 +195,66 @@ def drummer(inq,num):
     #trajz = np.append(downtrajz, uptrajz)
     #trajp = np.append(downtrajp, uptrajp)
 
-    trajz = spline_poly(325, 35, .08, .08, 0.01)
-    trajp = spline_poly(-89, -28, .08, .08, 0.01)
+    #bodharn drum chime
+    uptraj1 = fifth_poly(0, -103.1, 1.5)
+    uptraj2 = fifth_poly(23.1, -31.5, 1.5)
+    uptraj4 = fifth_poly(51.4, 99.8, 1.5)
+    uptraj6 = fifth_poly(-60.8, 0, 1.5)
 
-    trajz2 = spline_poly(325, 35, .08, .08, .1)
-    trajp2 = spline_poly(-89, -28, .08, .08, .1)
+    midtraj1 = fifth_poly(-103.1, -143.6, 0.5)
+    midtraj2 = fifth_poly(-31.5, -32.8, 0.5)
+    midtraj4 = fifth_poly(99.8, 99.8, 0.5)
+    midtraj6 = fifth_poly(0, 33.4, 0.5)
 
-    trajz3 = spline_poly(325, 35, .08, .08, .15)
-    trajp3 = spline_poly(-89, -28, .08, .08, .15)
+    combtraj1 = np.append(uptraj1, midtraj1)
+    combtraj2 = np.append(uptraj2, midtraj2)
+    combtraj4 = np.append(uptraj4, midtraj4)
+    combtraj6 = np.append(uptraj6, midtraj6)
+
+    downtraj1 = fifth_poly(-143.6, 0, 1.5)
+    downtraj2 = fifth_poly(-32.8, 23.1, 1.5)
+    downtraj4 = fifth_poly(99.8, 51.4, 1.5)
+    downtraj6 = fifth_poly(33.4, -60.8, 1.5)
+
+    #snare drum thunder
+    # uptraj1 = fifth_poly(0, 6.9, 1.0)
+    # uptraj2 = fifth_poly(23.1, 20.7, 1.0)
+    # uptraj4 = fifth_poly(51.4, 155.5, 1.0)
+    # uptraj6 = fifth_poly(-60.8, -60.8, 1.0)
+    #
+    # downtraj1 = fifth_poly(6.9, 0, 1.0)
+    # downtraj2 = fifth_poly(20.7, 23.1, 1.0)
+    # downtraj4 = fifth_poly(155.5, 51.4, 1.0)
+    # downtraj6 = fifth_poly(-60.8, -60.8, 1.0)
+
+    traj1 = np.append(combtraj1, downtraj1)
+    traj2 = np.append(combtraj2, downtraj2)
+    traj4 = np.append(combtraj4, downtraj4)
+    traj6 = np.append(combtraj6, downtraj6)
+
+    # traj1 = np.append(uptraj1, downtraj1)
+    # traj2 = np.append(uptraj2, downtraj2)
+    # traj4 = np.append(uptraj4, downtraj4)
+    # traj6 = np.append(uptraj6, downtraj6)
 
 
     while True:
 
-        i+=1
         play = inq.get()
-        print(i)
         print("got!")
-
+        chimbot(traj1, traj2, traj4, traj6,  num)
         #end of run indef
 
-        if i%3 == 1:
+        #if i == 1:
             #direction = i % 2
             #strumbot(downtrajz, downtrajp)
-            drumbot(trajz, trajp, num)
-
-        elif i%3 == 2:
-            drumbot(trajz2, trajp2, num)
-
+            #i += 1
+        #elif i == 2:
             #strumbot(uptrajz, uptrajp)
             #i = 1
             #prepGesture(num, tension)
             #time.sleep(0.25)
             #prepGesture(num, release)
-        elif i%3 == 0:
-            drumbot(trajz3, trajp3, num)
-
 
 
 
@@ -247,11 +271,13 @@ if __name__ == '__main__':
     strumD = 30
     speed = 0.25
     IP = [0, 23.1, 0, 51.4, 0, -60.8, 0]
+
     #notes = np.array([64, 60, 69, 55, 62])
 
-
-    arm0 = XArmAPI('192.168.1.236')
-
+    #bodhran
+    arm0 = XArmAPI('192.168.1.204')
+    #snare
+    #arm0 = XArmAPI('192.168.1.236')
     arms = [arm0]
     # arms = [arm1]
     totalArms = len(arms)
@@ -277,6 +303,6 @@ if __name__ == '__main__':
 
     while True:
         q0.put(1)
-        #xArm0 = Thread(target=drummer, args=(q0, 0,))
-        #xArm0.start()
-        time.sleep(1)
+        xArm0 = Thread(target=drummer, args=(q0, 0,))
+        xArm0.start()
+        time.sleep(4)
