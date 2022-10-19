@@ -67,7 +67,7 @@ def setup():
 
         arms[a].set_servo_angle(angle=[0.0, 23.1, 0.0, 51.4, 0.0, -60.8, 0.0], wait=False, speed=10, acceleration=0.25, is_radian=False)
 
-def spline_poly(q_i, q_f, ta, tt):
+def spline_poly(q_i, q_f, ta, tt, ts):
 
     #t is total time
 
@@ -127,13 +127,18 @@ def spline_poly(q_i, q_f, ta, tt):
     traj_tc = np.arange(0, tc, 0.004)
     pc = fifth_pos[hp] + traj_tc*hv
 
+    #ts is stall time (time waiting at bottom)
+    traj_ts = np.arange(0, ts, 0.004)
+    traj_ts = np.ones(len(traj_ts)-1) * (pc[len(pc)-1] + tfifth_pos[thp])
+    print(traj_ts)
+
     #print("pc")
     #print(pc)
 
     #print("tfifth_pos")
     #print(pc[len(pc)-1] + tfifth_pos)
 
-    half_traj = np.concatenate((fifth_pos[0:hp], pc, pc[len(pc)-1] + tfifth_pos[0:thp]))
+    half_traj = np.concatenate((fifth_pos[0:hp], pc, pc[len(pc)-1] + tfifth_pos[0:thp], traj_ts))
     full_traj = np.append(half_traj, np.flip(half_traj))
 
     return full_traj
@@ -168,8 +173,8 @@ def drumbot(trajz, trajp, arm):
         #j_angles[4] = traj[i]
         #arms[numarm].set_servo_angle_j(angles=j_angles, is_radian=False)
         mvpose = [492,0,trajz[i],180,trajp[i],0]
-        print(mvpose[2])
-        arms[arm].set_servo_cartesian(mvpose, speed=100, mvacc=2000)
+        print(mvpose[4])
+        #arms[arm].set_servo_cartesian(mvpose, speed=100, mvacc=2000)
         while track_time < initial_time + 0.004:
             track_time = time.time()
             time.sleep(0.0001)
@@ -192,8 +197,8 @@ def drummer(inq,num):
     #trajz = np.append(downtrajz, uptrajz)
     #trajp = np.append(downtrajp, uptrajp)
 
-    trajz = spline_poly(325, 20, .07, .04)
-    trajp = spline_poly(-89, -30, .07, .04)
+    trajz = spline_poly(325, 20, .07, .04, .1)
+    trajp = spline_poly(-89, -30, .07, .04, .1)
 
 
     while True:
@@ -251,15 +256,15 @@ if __name__ == '__main__':
     xArm0 = Thread(target=drummer, args=(q0, 0,))
     xArm0.start()
 
-    input("start RTP MIDI")
-    rtp_midi = RtpMidi(ROBOT, MyHandler(), PORT)
-    print("test")
-    rtp_midi.run()
+    #input("start RTP MIDI")
+   # rtp_midi = RtpMidi(ROBOT, MyHandler(), PORT)
+    #print("test")
+    #rtp_midi.run()
     #print("test2")
 
 
-    #while True:
-    #    q0.put(1)
+    while True:
+        q0.put(1)
     #    xArm0 = Thread(target=drummer, args=(q0, 0,))
-    #    xArm0.start()
-    #    time.sleep(1)
+     #   xArm0.start()
+        time.sleep(1)
