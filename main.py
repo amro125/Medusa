@@ -39,7 +39,14 @@ class MyHandler(server.Handler):
                     if len(notetype) > 0:
                         dq1.put(notetype)
 
-
+            if chn == 3:  # this means its channel 4 !!!!!
+                if command.command == 'note_on':
+                    #print("DRUMMO")
+                    key = command.params.key.__int__()
+                    velocity = command.params.velocity
+                    notetype = np.where(notes == key)[0]
+                    if len(notetype) > 0:
+                        dq2.put(notetype)
 
             if chn == 13:  # this means its channel 14!!!!!
                 if command.command == 'note_on':
