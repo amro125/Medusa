@@ -283,11 +283,14 @@ def strummer(inq,num):
     tension = fifth_poly(0, -20, 0.5)
     release = fifth_poly(-20, 0, 0.75)
     while True:
-        play = inq.get()
+        play = inq.get()  # WHERE I AM GETTING A PLAY A NOT COMMAND
+
         print("got!")
         if play == 1:
             direction = i % 2
-            time.sleep(.1)
+            time.sleep(delayarray[direction, num])  # time delay before playing
+            print(num)
+            print(delayarray[0, num])
             strumbot(num, both[direction])
             i += 1
         elif play == 2:
@@ -327,6 +330,7 @@ if __name__ == '__main__':
     drumarm1 = XArmAPI('192.168.1.236')
     drumarm2 = XArmAPI('192.168.1.204')
     arms = [arm0, arm1, arm2, arm3, arm4, drumarm1, drumarm2]
+    delayarray = np.array([[0.15, 0.15, 0.15, 0.15, 0.15, 0.0, 0.0], [0.1, 0.15, 0.1, 0.15, 0.125, 0.0, 0.0]])
     # arms = [arm1]
     totalArms = len(arms)
     setup()
