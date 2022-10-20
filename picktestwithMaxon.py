@@ -283,10 +283,6 @@ def rightHand(qplay):
             ## D - 3rd string
             ## ...
 
-            ## Strumming from 1st to 2nd
-            if mode == 1: # Strumming mode
-
-            Dict = {pos: }
 
 
             ### STRUMMING ####
@@ -358,7 +354,7 @@ if __name__ == "__main__":
 
     chords(0)
     input("STOP DUMBAS")
-    strumq = Queue()
+    mq = Queue()
     fingerq = Queue()
     midiq = Queue()
     global arm1
