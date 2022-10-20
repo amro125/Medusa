@@ -38,6 +38,7 @@ def setup():
 
 
 def fifth_poly(q_i, q_f, t):
+
     # time/0.005
     traj_t = np.arange(0, t, 0.002)
     dq_i = 0
