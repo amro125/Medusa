@@ -32,8 +32,13 @@ class MyHandler(server.Handler):
 
             if chn == 2:  # this means its channel 3 !!!!!
                 if command.command == 'note_on':
-                    print("DRUMMO")
-                    dq1.put(1)
+                    #print("DRUMMO")
+                    key = command.params.key.__int__()
+                    velocity = command.params.velocity
+                    notetype = np.where(notes == key)[0]
+                    if len(notetype) > 0:
+                        dq1.put(notetype)
+
 
 
             if chn == 13:  # this means its channel 14!!!!!
@@ -161,7 +166,6 @@ def spline_poly(q_i, q_f, ta, tt, ts):
     # ts is stall time (time waiting at bottom)
     traj_ts = np.arange(0, ts, 0.004)
     traj_ts = np.ones(len(traj_ts) - 1) * (pc[len(pc) - 1] + tfifth_pos[thp])
-    print(traj_ts)
 
     # print("pc")
     # print(pc)
@@ -241,13 +245,28 @@ def drummer(inq,num):
     #trajz = np.append(downtrajz, uptrajz)
     #trajp = np.append(downtrajp, uptrajp)
 
-    trajz = spline_poly(325, 18, .08, .04, .1)
-    trajp = spline_poly(-89, -23, .08, .04, .1)
+    #single hit
+    trajz = spline_poly(325, 18, .08, .04, 0.01)
+    trajp = spline_poly(-89, -30, .08, .04, 0.01)
+
+    #double hit
+    trajz2 = spline_poly(325, 18, .08, .04, 0.1)
+    trajp2 = spline_poly(-89, -30, .08, .04, 0.1)
+
+    #triple hit
+    trajz3 = spline_poly(325, 18, .08, .04, 0.15)
+    trajp3 = spline_poly(-89, -30, .08, .04, 0.15)
+
 
     while True:
         play = inq.get()
         print("got!")
-        drumbot(trajz, trajp, num)
+        if play == 0:
+            drumbot(trajz, trajp, num)
+        elif play == 1:
+            drumbot(trajz2, trajp2, num)
+        elif play == 2:
+            drumbot(trajz3, trajp3, num)
         #if i == 1:
 def strummer(inq,num):
     i = 0
