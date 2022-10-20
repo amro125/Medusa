@@ -173,7 +173,7 @@ def drumbot(trajz, trajp, arm):
         #j_angles[4] = traj[i]
         #arms[numarm].set_servo_angle_j(angles=j_angles, is_radian=False)
         mvpose = [492,0,trajz[i],180,trajp[i],0]
-        print(mvpose[4])
+        #print(mvpose[4])
         #arms[arm].set_servo_cartesian(mvpose, speed=100, mvacc=2000)
         while track_time < initial_time + 0.004:
             track_time = time.time()
