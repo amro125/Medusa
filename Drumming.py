@@ -67,8 +67,10 @@ def setup():
 
         arms[a].set_servo_angle(angle=[0.0, 23.1, 0.0, 51.4, 0.0, -60.8, 0.0], wait=False, speed=10, acceleration=0.25, is_radian=False)
 
-def spline_poly(q_i, q_f, ta, tt, ts):
+def spline_poly(q_i, q_f, ta, tt, ts, dir):
 
+
+    #dir is direction (0 is down, 1 is up)
     #t is total time
 
     #initial accel (using first half of a 5th order poly)
@@ -139,9 +141,13 @@ def spline_poly(q_i, q_f, ta, tt, ts):
     #print(pc[len(pc)-1] + tfifth_pos)
 
     half_traj = np.concatenate((fifth_pos[0:hp], pc, pc[len(pc)-1] + tfifth_pos[0:thp], traj_ts))
-    full_traj = np.append(half_traj, np.flip(half_traj))
+    #full_traj = np.append(half_traj, np.flip(half_traj))
+    #if dir == 0: #down
+        #do nothing
+    if dir == 1:  #up
+        half_traj = np.flip(half_traj)
 
-    return full_traj
+    return half_traj
 
 
 def fifth_poly(q_i, q_f, t):
@@ -173,8 +179,8 @@ def drumbot(trajz, trajp, arm):
         #j_angles[4] = traj[i]
         #arms[numarm].set_servo_angle_j(angles=j_angles, is_radian=False)
         mvpose = [492,0,trajz[i],180,trajp[i],0]
-        #print(mvpose[4])
-        #arms[arm].set_servo_cartesian(mvpose, speed=100, mvacc=2000)
+        print(mvpose[4])
+        arms[arm].set_servo_cartesian(mvpose, speed=100, mvacc=2000)
         while track_time < initial_time + 0.004:
             track_time = time.time()
             time.sleep(0.0001)
@@ -182,44 +188,69 @@ def drumbot(trajz, trajp, arm):
 
 
 def drummer(inq,num):
-    #i = 1
-    #uptraj = fifth_poly(-strumD/2, strumD/2, speed)
-    #downtraj = fifth_poly(strumD/2, -strumD/2, speed)
-    #both = [uptraj, downtraj]
-    #tension = fifth_poly(0, -20, 0.5)
-    #release = fifth_poly(-20, 0, 0.75)
 
+    i = 1
 
-    #downtrajz= fifth_poly(325, 20, .3)
-    #uptrajz= fifth_poly(20, 325, .3)
-    #downtrajp= fifth_poly(-89, -36, .3)
-    #uptrajp = fifth_poly(-36, -89, .3)
-    #trajz = np.append(downtrajz, uptrajz)
-    #trajp = np.append(downtrajp, uptrajp)
+    hidowntrajz = spline_poly(325, 20, .07, .04, .01, 0)
+    hidowntrajp = spline_poly(-89, -30, .07, .04, .01, 0)
 
-    trajz = spline_poly(325, 20, .07, .04, .1)
-    trajp = spline_poly(-89, -30, .07, .04, .1)
+    hiuptrajz = spline_poly(325, 20, .07, .04, .01, 1)
+    hiuptrajp = spline_poly(-89, -30, .07, .04, .01, 1)
 
+    lodowntrajz = spline_poly(85, 20, .07, .04, .01, 0)
+    lodowntrajp = spline_poly(-89, -30, .07, .04, .01, 0)
+
+    louptrajz = spline_poly(85, 20, .07, .04, .01, 1)
+    louptrajp = spline_poly(-89, -30, .07, .04, .01, 1)
+
+    #traj for deeper hits(right now where pitch and z go lower, tt is shorter)
+
+    hidowntrajz2 = spline_poly(325, -20, .07, .04, .01, 0) #don't use (probably)
+    hidowntrajp2 = spline_poly(-89, 30, .07, .04, .01, 0)
+
+    hiuptrajz2 = spline_poly(325, -20, .07, .04, .01, 1)
+    hiuptrajp2 = spline_poly(-89, 30, .07, .04, .01, 1)
+
+    lodowntrajz2 = spline_poly(85, -20, .07, .04, .01, 0)
+    lodowntrajp2 = spline_poly(-89, 30, .07, .04, .01, 0)
+
+    louptrajz2 = spline_poly(85, -20, .07, .04, .01, 1)
+    louptrajp2 = spline_poly(-89, 30, .07, .04, .01, 1)
+
+    #hihi
+    hihitrajz = np.append(hidowntrajz, hiuptrajz)
+    hihitrajp = np.append(hidowntrajp, hiuptrajp)
+
+    #hilo
+    hilotrajz = np.append(hidowntrajz, louptrajz)
+    hilotrajp = np.append(hidowntrajp, louptrajp)
+
+    #lolo
+    lolotrajz = np.append(lodowntrajz2, louptrajz2)
+    lolotrajp = np.append(lodowntrajp2, louptrajp2)
+
+    #lohi
+    lohitrajz = np.append(lodowntrajz2, hiuptrajz2)
+    lohitrajp = np.append(lodowntrajp2, hiuptrajp2)
 
     while True:
 
         play = inq.get()
         print("got!")
-        drumbot(trajz, trajp, num)
+        #drumbot(trajz, trajp, num)
         #end of run indef
 
-        #if i == 1:
-            #direction = i % 2
-            #strumbot(downtrajz, downtrajp)
-            #i += 1
-        #elif i == 2:
-            #strumbot(uptrajz, uptrajp)
-            #i = 1
-            #prepGesture(num, tension)
-            #time.sleep(0.25)
-            #prepGesture(num, release)
+        if i == 1:
+            drumbot(hihitrajz, hihitrajp, num)
+        elif i == 2:
+            drumbot(hilotrajz, hilotrajp, num)
+        elif i == 3:
+            drumbot(lolotrajz, lolotrajp, num)
+        elif i == 4:
+            drumbot(lohitrajz, lohitrajp, num)
+            i = 0
 
-
+        i = i + 1
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':

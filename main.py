@@ -62,7 +62,9 @@ class MyHandler(server.Handler):
                     # print(chn)
                     key = command.params.key.__int__()
                     velocity = command.params.velocity
-                    for q in qList:
+                    # for q in qList:
+                    #     q.put(2)
+                    for q in qList[0:5]:
                         q.put(2)
                     # print('key {} with velocity {}'.format(key, velocity))
                     # q.put(velocity)
@@ -219,6 +221,25 @@ def strumbot(numarm, traj):
             time.sleep(0.0001)
         initial_time += 0.004
 
+#chimbot plays chimes with drummer function
+def chimbot(traj1, traj2, traj4, traj6, arm):
+
+    #j_angles = pos
+    track_time = time.time()
+    initial_time = time.time()
+    for i in range(len(traj1)):
+        # run command
+        #start_time = time.time()
+        #j_angles[4] = traj[i]
+        #arms[numarm].set_servo_angle_j(angles=j_angles, is_radian=False)
+        jointangles = [traj1[i],traj2[i],0,traj4[i],0,traj6[i],0]
+        #print(traj4[i])
+        arms[arm].set_servo_angle_j(angles=jointangles, is_radian=False)
+        while track_time < initial_time + 0.004:
+            track_time = time.time()
+            time.sleep(0.0001)
+        initial_time += 0.004
+
 
 def prepGesture(numarm, traj):
     pos = IP[numarm]
@@ -264,6 +285,48 @@ def drummer(inq,num):
     trajz3 = spline_poly(325, 18, .08, .04, 0.15)
     trajp3 = spline_poly(-89, -30, .08, .04, 0.15)
 
+    # bodharn drum chime
+    uptraj1 = fifth_poly(0, -103.1, 1.5)
+    uptraj2 = fifth_poly(23.1, -31.5, 1.5)
+    uptraj4 = fifth_poly(51.4, 99.8, 1.5)
+    uptraj6 = fifth_poly(-60.8, 0, 1.5)
+
+    midtraj1 = fifth_poly(-103.1, -143.6, 0.5)
+    midtraj2 = fifth_poly(-31.5, -32.8, 0.5)
+    midtraj4 = fifth_poly(99.8, 99.8, 0.5)
+    midtraj6 = fifth_poly(0, 33.4, 0.5)
+
+    combtraj1 = np.append(uptraj1, midtraj1)
+    combtraj2 = np.append(uptraj2, midtraj2)
+    combtraj4 = np.append(uptraj4, midtraj4)
+    combtraj6 = np.append(uptraj6, midtraj6)
+
+    downtraj1 = fifth_poly(-143.6, 0, 1.5)
+    downtraj2 = fifth_poly(-32.8, 23.1, 1.5)
+    downtraj4 = fifth_poly(99.8, 51.4, 1.5)
+    downtraj6 = fifth_poly(33.4, -60.8, 1.5)
+
+    traj1 = np.append(combtraj1, downtraj1)
+    traj2 = np.append(combtraj2, downtraj2)
+    traj4 = np.append(combtraj4, downtraj4)
+    traj6 = np.append(combtraj6, downtraj6)
+
+    #snare thunder
+
+    thunduptraj1 = fifth_poly(0, 6.9, 1.0)
+    thunduptraj2 = fifth_poly(23.1, 20.7, 1.0)
+    thunduptraj4 = fifth_poly(51.4, 155.5, 1.0)
+    thunduptraj6 = fifth_poly(-60.8, -60.8, 1.0)
+
+    thunddowntraj1 = fifth_poly(6.9, 0, 1.0)
+    thunddowntraj2 = fifth_poly(20.7, 23.1, 1.0)
+    thunddowntraj4 = fifth_poly(155.5, 51.4, 1.0)
+    thunddowntraj6 = fifth_poly(-60.8, -60.8, 1.0)
+
+    thundtraj1 = np.append(thunduptraj1, thunddowntraj1)
+    thundtraj2 = np.append(thunduptraj2, thunddowntraj2)
+    thundtraj4 = np.append(thunduptraj4, thunddowntraj4)
+    thundtraj6 = np.append(thunduptraj6, thunddowntraj6)
 
     while True:
         play = inq.get()
@@ -274,7 +337,10 @@ def drummer(inq,num):
             drumbot(trajz2, trajp2, num)
         elif play == 2:
             drumbot(trajz3, trajp3, num)
-        #if i == 1:
+        elif play == 3:
+            chimbot(traj1, traj2, traj4, traj6, num)
+        elif play == 4:
+            chimbot(thundtraj1, thundtraj2, thundtraj4, thundtraj6, num)
 def strummer(inq,num):
     i = 0
     uptraj = fifth_poly(-strumD/2, strumD/2, speed)
