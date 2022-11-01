@@ -89,7 +89,7 @@ def setup():
         curIP = IP[a]
         arms[a].set_servo_angle(angle=curIP, wait=False, speed=10, acceleration=0.25, is_radian=False)
 
-        # arms[a].set_servo_angle(angle=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], wait=False, speed=10, acceleration=0.25, is_radian=False)
+        #arms[a].set_servo_angle(angle=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], wait=False, speed=10, acceleration=0.25, is_radian=False)
 
 def setup2():
     for a in range(len(arms)):
@@ -274,16 +274,17 @@ def drummer(inq,num):
     #trajp = np.append(downtrajp, uptrajp)
 
     #single hit
-    trajz = spline_poly(325, 18, .08, .04, 0.01)
-    trajp = spline_poly(-89, -30, .08, .04, 0.01)
+    trajz = spline_poly(325, 18, .10, .04, 0.01)
+    trajp = spline_poly(-89, -30, .10, .04, 0.01)
+
 
     #double hit
-    trajz2 = spline_poly(325, 18, .08, .04, 0.1)
-    trajp2 = spline_poly(-89, -30, .08, .04, 0.1)
+    trajz2 = spline_poly(325, 18, .10, .04, 0.1)
+    trajp2 = spline_poly(-89, -30, .10, .04, 0.1)
 
     #triple hit
-    trajz3 = spline_poly(325, 18, .08, .04, 0.15)
-    trajp3 = spline_poly(-89, -30, .08, .04, 0.15)
+    trajz3 = spline_poly(325, 18, .10, .04, 0.15)
+    trajp3 = spline_poly(-89, -30, .10, .04, 0.15)
 
     # bodharn drum chime
     uptraj1 = fifth_poly(0, -103.1, 1.5)

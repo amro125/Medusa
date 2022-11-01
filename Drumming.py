@@ -191,17 +191,17 @@ def drummer(inq,num):
 
     i = 1
 
-    hidowntrajz = spline_poly(325, 20, .07, .04, .01, 0)
-    hidowntrajp = spline_poly(-89, -30, .07, .04, .01, 0)
+    hidowntrajz = spline_poly(325, 20, .12, .04, .01, 0)
+    hidowntrajp = spline_poly(-89, -30, .12, .04, .01, 0)
 
-    hiuptrajz = spline_poly(325, 20, .07, .04, .01, 1)
-    hiuptrajp = spline_poly(-89, -30, .07, .04, .01, 1)
+    hiuptrajz = spline_poly(325, 20, .12, .04, .01, 1)
+    hiuptrajp = spline_poly(-89, -30, .12, .04, .01, 1)
 
-    lodowntrajz = spline_poly(85, 20, .07, .04, .01, 0)
-    lodowntrajp = spline_poly(-89, -30, .07, .04, .01, 0)
+    lodowntrajz = spline_poly(85, 20, .12, .04, .01, 0)
+    lodowntrajp = spline_poly(-89, -30, .12, .04, .01, 0)
 
-    louptrajz = spline_poly(85, 20, .07, .04, .01, 1)
-    louptrajp = spline_poly(-89, -30, .07, .04, .01, 1)
+    louptrajz = spline_poly(85, 20, .12, .04, .01, 1)
+    louptrajp = spline_poly(-89, -30, .12, .04, .01, 1)
 
     #traj for deeper hits(right now where pitch and z go lower, tt is shorter)
 
