@@ -116,7 +116,7 @@ def fifth_poly(q_i, q_f, t, ttopstop, tbotstop):
     traj_pos = a0 + a1 * traj_t + a2 * traj_t ** 2 + a3 * traj_t ** 3 + a4 * traj_t ** 4 + a5 * traj_t ** 5
 
     traj_top = np.ones(int(ttopstop / 0.004)) * q_i #time stopped at top of trajectory, before strike
-    traj_bot = np.ones(int(tbotstop / 0.004)) * q_i #time stopped at bottom of trajectory, after strike
+    traj_bot = np.ones(int(tbotstop / 0.004)) * q_f #time stopped at bottom of trajectory, after strike
 
     half_traj = np.concatenate((traj_top, traj_pos, traj_bot))
     full_traj = np.append(half_traj, np.flip(half_traj))
@@ -136,7 +136,7 @@ def drumbot(traj2, traj4, traj6, arm):
         #arms[numarm].set_servo_angle_j(angles=j_angles, is_radian=False)
         jointangles = [0,traj2[i],0,traj4[i],0,traj6[i],0]
         print(traj4[i])
-        #arms[arm].set_servo_angle_j(angles=jointangles, is_radian=False)
+        arms[arm].set_servo_angle_j(angles=jointangles, is_radian=False)
         while track_time < initial_time + 0.004:
             track_time = time.time()
             time.sleep(0.0001)
@@ -157,9 +157,9 @@ def drummer(inq,num):
     # trajz3 = spline_poly(325, 35, .08, .08, .15)
     # trajp3 = spline_poly(-89, -28, .08, .08, .15)
 
-    traj2 = fifth_poly(IP[1], FP[1], 2, .5, 1.5)
-    traj4 = fifth_poly(IP[3], FP[3], 2, 1, 1)
-    traj6 = fifth_poly(IP[5], FP[5], 1.5, 2, .5)
+    traj2 = fifth_poly(IP[1], FP[1], 1.25, .25, .254)
+    traj4 = fifth_poly(IP[3], FP[3], 1.25, .45, .054)
+    traj6 = fifth_poly(IP[5], FP[5], .75, 1, .004)
 
 
     while True:
@@ -239,4 +239,4 @@ if __name__ == '__main__':
         q0.put(1)
         #xArm0 = Thread(target=drummer, args=(q0, 0,))
         #xArm0.start()
-        time.sleep(10)
+        time.sleep(5)
