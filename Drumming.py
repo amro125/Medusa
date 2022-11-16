@@ -4,54 +4,54 @@ import time
 import numpy as np
 import math
 
-from rtpmidi import RtpMidi
-from pymidi import server
+#from rtpmidi import RtpMidi
+#from pymidi import server
 from queue import Queue
 from threading import Thread
 from xarm.wrapper import XArmAPI
 
 # RTP MIDI STUFF
-class MyHandler(server.Handler):
-
-    def on_peer_connected(self, peer):
-        # Handler for peer connected
-        print('Peer connected: {}'.format(peer))
-
-    def on_peer_disconnected(self, peer):
-        # Handler for peer disconnected
-        print('Peer disconnected: {}'.format(peer))
-
-    def on_midi_commands(self, peer, command_list):
-        # Handler for midi msgs
-        for command in command_list:
-            chn = command.channel
-            if chn == 1:  # this means its channel 2!!!!!
-                if command.command == 'note_on':
-                    print("YEYE START")
-                    q0.put(1)
-
-
-            if chn == 13:  # this means its channel 14!!!!!
-                if command.command == 'note_on':
-                    print(chn)
-                    key = command.params.key.__int__()
-                    velocity = command.params.velocity
-                    rob = np.where(notes == key)[0]
-                    if len(rob) > 0:
-                        print(int(rob))
-                        qList[int(rob)].put(1)
-            if chn == 12:  # this means its channel 13!!!!!
-                if command.command == 'note_on':
-                    # print(chn)
-                    key = command.params.key.__int__()
-                    velocity = command.params.velocity
-                    for q in qList:
-                        q.put(2)
-                    # print('key {} with velocity {}'.format(key, velocity))
-                    # q.put(velocity)
-
-
-                    #playDance(dances[velocity])
+# class MyHandler(server.Handler):
+#
+#     def on_peer_connected(self, peer):
+#         # Handler for peer connected
+#         print('Peer connected: {}'.format(peer))
+#
+#     def on_peer_disconnected(self, peer):
+#         # Handler for peer disconnected
+#         print('Peer disconnected: {}'.format(peer))
+#
+#     def on_midi_commands(self, peer, command_list):
+#         # Handler for midi msgs
+#         for command in command_list:
+#             chn = command.channel
+#             if chn == 1:  # this means its channel 2!!!!!
+#                 if command.command == 'note_on':
+#                     print("YEYE START")
+#                     q0.put(1)
+#
+#
+#             if chn == 13:  # this means its channel 14!!!!!
+#                 if command.command == 'note_on':
+#                     print(chn)
+#                     key = command.params.key.__int__()
+#                     velocity = command.params.velocity
+#                     rob = np.where(notes == key)[0]
+#                     if len(rob) > 0:
+#                         print(int(rob))
+#                         qList[int(rob)].put(1)
+#             if chn == 12:  # this means its channel 13!!!!!
+#                 if command.command == 'note_on':
+#                     # print(chn)
+#                     key = command.params.key.__int__()
+#                     velocity = command.params.velocity
+#                     for q in qList:
+#                         q.put(2)
+#                     # print('key {} with velocity {}'.format(key, velocity))
+#                     # q.put(velocity)
+#
+#
+#                     #playDance(dances[velocity])
 
 
 def setup():
@@ -168,7 +168,7 @@ def fifth_poly(q_i, q_f, t):
     return traj_pos
 
 
-def drumbot(trajz, trajp, arm):
+def drumbot(trajz, trajp, arm, myangles):
 
     #j_angles = pos
     track_time = time.time()
@@ -179,15 +179,16 @@ def drumbot(trajz, trajp, arm):
         #j_angles[4] = traj[i]
         #arms[numarm].set_servo_angle_j(angles=j_angles, is_radian=False)
         mvpose = [492,0,trajz[i],180,trajp[i],0]
-        print(mvpose[4])
+        #print(mvpose[4])
         arms[arm].set_servo_cartesian(mvpose, speed=100, mvacc=2000)
+        myangles = arms[arm].get_servo_angle()
         while track_time < initial_time + 0.004:
             track_time = time.time()
             time.sleep(0.0001)
         initial_time += 0.004
 
 
-def drummer(inq,num):
+def drummer(inq,num, myangles):
 
     i = 1
 
@@ -241,13 +242,13 @@ def drummer(inq,num):
         #end of run indef
 
         if i == 1:
-            drumbot(hihitrajz, hihitrajp, num)
+            drumbot(hihitrajz, hihitrajp, num, myangles)
         elif i == 2:
-            drumbot(hilotrajz, hilotrajp, num)
+            drumbot(hilotrajz, hilotrajp, num, myangles)
         elif i == 3:
-            drumbot(lolotrajz, lolotrajp, num)
+            drumbot(lolotrajz, lolotrajp, num, myangles)
         elif i == 4:
-            drumbot(lohitrajz, lohitrajp, num)
+            drumbot(lohitrajz, lohitrajp, num, myangles)
             i = 0
 
         i = i + 1
@@ -261,15 +262,17 @@ if __name__ == '__main__':
     global strumD
     global speed
     global notes
+    global myangles
 
     strumD = 30
     speed = 0.25
     IP = [0, 23.1, 0, 51.4, 0, -60.8, 0]
+    myangles = []
 
     #notes = np.array([64, 60, 69, 55, 62])
 
 
-    arm0 = XArmAPI('192.168.1.236')
+    arm0 = XArmAPI('192.168.1.204')
 
     arms = [arm0]
     # arms = [arm1]
@@ -284,11 +287,11 @@ if __name__ == '__main__':
     q0 = Queue()
     qList = [q0]
 
-    xArm0 = Thread(target=drummer, args=(q0, 0,))
+    xArm0 = Thread(target=drummer, args=(q0, 0, myangles,))
     xArm0.start()
 
     #input("start RTP MIDI")
-   # rtp_midi = RtpMidi(ROBOT, MyHandler(), PORT)
+    # rtp_midi = RtpMidi(ROBOT, MyHandler(), PORT)
     #print("test")
     #rtp_midi.run()
     #print("test2")
@@ -299,3 +302,4 @@ if __name__ == '__main__':
     #    xArm0 = Thread(target=drummer, args=(q0, 0,))
      #   xArm0.start()
         time.sleep(1)
+        print(myangles)
