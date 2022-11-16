@@ -23,32 +23,11 @@ def setup():
         # curIP = IP[a]
         # arms[a].set_servo_angle(angle=curIP, wait=False, speed=10, acceleration=0.25, is_radian=False)
 
-        arms[a].set_servo_angle(angle=[9.3, 58.2, -8.1, 95.9, 190.9, 19.7, -98.3], wait=False, speed=10, acceleration=0.25, is_radian=False)
+        arms[a].set_servo_angle(angle=[-12.2, 52.8, 26.5, 44, 11.9,-77.5, 69.3], wait=False, speed=10, acceleration=0.25, is_radian=False)
 
 
 
-def fifth_poly(q_i, q_f, t, ttopstop, tbotstop):
-    # time/0.005
-    traj_t = np.arange(0, t, 0.004)
-    dq_i = 0
-    dq_f = 0
-    ddq_i = 0
-    ddq_f = 0
-    a0 = q_i
-    a1 = dq_i
-    a2 = 0.5 * ddq_i
-    a3 = 1 / (2 * t ** 3) * (20 * (q_f - q_i) - (8 * dq_f + 12 * dq_i) * t - (3 * ddq_f - ddq_i) * t ** 2)
-    a4 = 1 / (2 * t ** 4) * (30 * (q_i - q_f) + (14 * dq_f + 16 * dq_i) * t + (3 * ddq_f - 2 * ddq_i) * t ** 2)
-    a5 = 1 / (2 * t ** 5) * (12 * (q_f - q_i) - (6 * dq_f + 6 * dq_i) * t - (ddq_f - ddq_i) * t ** 2)
-    traj_pos = a0 + a1 * traj_t + a2 * traj_t ** 2 + a3 * traj_t ** 3 + a4 * traj_t ** 4 + a5 * traj_t ** 5
 
-    traj_top = np.ones(int(ttopstop / 0.004)) * q_i #time stopped at top of trajectory, before strike
-    traj_bot = np.ones(int(tbotstop / 0.004)) * q_f #time stopped at bottom of trajectory, after strike
-
-    half_traj = np.concatenate((traj_top, traj_pos, traj_bot))
-    full_traj = np.append(half_traj, np.flip(half_traj))
-
-    return full_traj
 
 def livetraj(inq, robot):
     tf = 2
@@ -69,7 +48,7 @@ def livetraj(inq, robot):
     dancet = 0
     while True:
         goal = inq.get()
-        print("moving", robot)
+        #print("moving", robot)
         q_i = p
         q_dot_i = 0
         q_dotdot_i = 0
@@ -80,7 +59,7 @@ def livetraj(inq, robot):
             start_time = time.time()
             if inq.empty() == False:
                 goal = inq.get()
-                print("switch bot", robot)
+                #print("switch bot", robot)
                 q_i = p
                 q_dot_i = v
                 q_dotdot_i = 0
@@ -108,17 +87,20 @@ def livetraj(inq, robot):
 
 
 
-            xwave = np.sin(dancet) * 133.5
-            ywave = np.sin(dancet) * 182
-            zwave = np.sin(dancet) * 79.5
+            xwave = np.cos(3*dancet) * 48
+            ywave = np.sin(3*dancet) * 50
+            zwave = -np.cos(3*dancet) * 22
+            #xwave = 0
+            #ywave = 0
+            #zwave = 0
 
 
 
-            mvpose = [589.1 + xwave, 30 + ywave, 40.6 + zwave, -122.1, -7.2, -89.2]
+            mvpose = [425 + xwave, 17.6 + ywave, 102 + zwave, -111.2, 0, -90.2]
 
 
-            #arms[robot].set_servo_cartesian(mvpose, speed=100, mvacc=2000)
-            print(mvpose[0])
+            arms[robot].set_servo_cartesian(mvpose, speed=100, mvacc=2000)
+            print(mvpose[2])
             tts = time.time() - start_time
             sleep = 0.004 - tts
 
@@ -139,7 +121,7 @@ if __name__ == '__main__':
     # global arms
 
 
-    IP = [9.3, 58.2, -8.1, 95.9, 190.9, 19.7, -98.3]
+    IP = [40.7, 63.9, -40, 83.9, 177.1, 24.4, -54]
     IPcar = [589.1, 31.2, 40.6, -122.1, -7.2, -89.2] #ip cartesian
 
 
@@ -168,9 +150,10 @@ if __name__ == '__main__':
     #rtp_midi.run()
     #print("test2")
 
+    q0.put(1)
 
-    while True:
-        q0.put(1)
-        #xArm0 = Thread(target=drummer, args=(q0, 0,))
-        #xArm0.start()
-        #time.sleep(10)
+    # while True:
+    #     q0.put(1)
+    #     #xArm0 = Thread(target=drummer, args=(q0, 0,))
+    #     #xArm0.start()
+    #     time.sleep(22)

@@ -250,7 +250,7 @@ if __name__ == '__main__':
     #notes = np.array([64, 60, 69, 55, 62])
 
 
-    arm0 = XArmAPI('192.168.1.236')
+    arm0 = XArmAPI('192.168.1.204')
 
     arms = [arm0]
     # arms = [arm1]

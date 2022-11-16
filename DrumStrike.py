@@ -3,13 +3,14 @@ import sys
 import time
 import numpy as np
 import math
+import matplotlib.pyplot as plt
 
 #from rtpmidi import RtpMidi
 #from pymidi import server
 from queue import Queue
 from threading import Thread
 from xarm.wrapper import XArmAPI
-
+from numpy import diff
 
 
 def setup():
@@ -25,7 +26,7 @@ def setup():
 
         arms[a].set_servo_angle(angle=[0.0, -10.5, 0.0, 114.3, 0.0, -71.1, 0.0], wait=False, speed=10, acceleration=0.25, is_radian=False)
 
-def spline_poly(q_i, q_f, ta, tt, ts):
+def spline_poly(q_i, q_f, ta, tt, ttopstop, tbotstop):
 
     #t is total time
 
@@ -39,9 +40,9 @@ def spline_poly(q_i, q_f, ta, tt, ts):
     a0 = q_i
     a1 = dq_i
     a2 = 0.5 * ddq_i
-    a3 = 1 / (2 * ta ** 3) * (20 * (q_f - q_i)/6 - (8 * dq_f + 12 * dq_i) * ta - (3 * ddq_f - ddq_i) * ta ** 2)
-    a4 = 1 / (2 * ta ** 4) * (30 * (q_i - q_f)/6 + (14 * dq_f + 16 * dq_i) * ta + (3 * ddq_f - 2 * ddq_i) * ta ** 2)
-    a5 = 1 / (2 * ta ** 5) * (12 * (q_f - q_i)/6 - (6 * dq_f + 6 * dq_i) * ta - (ddq_f - ddq_i) * ta ** 2)
+    a3 = 1 / (2 * ta ** 3) * (20 * (q_f - q_i)/2 - (8 * dq_f + 12 * dq_i) * ta - (3 * ddq_f - ddq_i) * ta ** 2)
+    a4 = 1 / (2 * ta ** 4) * (30 * (q_i - q_f)/2 + (14 * dq_f + 16 * dq_i) * ta + (3 * ddq_f - 2 * ddq_i) * ta ** 2)
+    a5 = 1 / (2 * ta ** 5) * (12 * (q_f - q_i)/2 - (6 * dq_f + 6 * dq_i) * ta - (ddq_f - ddq_i) * ta ** 2)
     fifth_pos = a0 + a1 * traj_ta + a2 * traj_ta ** 2 + a3 * traj_ta ** 3 + a4 * traj_ta ** 4 + a5 * traj_ta ** 5
     fifth_vel = a1 + 2 * a2 * traj_ta + 3 * a3 * traj_ta ** 2 + 4 * a4 * traj_ta ** 3 + 5 * a5 * traj_ta ** 4
 
@@ -88,13 +89,15 @@ def spline_poly(q_i, q_f, ta, tt, ts):
     #print("tfifth_pos")
     #print(pc[len(pc)-1] + tfifth_pos)
 
-    #ts is stall time at bottom
-    sfifth_pos = np.ones(int(ts / 0.004)) * pc[len(pc)-1] + tfifth_pos[thp]
+    #ts is stall time at top / bottom
+    traj_top = np.ones(int(ttopstop / 0.004)) * q_i  # time stopped at top of trajectory, before strike
+    traj_bot = np.ones(int(tbotstop / 0.004)) * q_f  # time stopped at bottom of trajectory, after strike
+    #sfifth_pos = np.ones(int(ts / 0.004)) * pc[len(pc)-1] + tfifth_pos[thp]
 
     #print('stall')
     #print(sfifth_pos)
 
-    half_traj = np.concatenate((fifth_pos[0:hp], pc, pc[len(pc)-1] + tfifth_pos[0:thp], sfifth_pos))
+    half_traj = np.concatenate((traj_top,fifth_pos[0:hp], pc, pc[len(pc)-1] + tfifth_pos[0:thp], traj_bot))
     full_traj = np.append(half_traj, np.flip(half_traj))
 
     return full_traj
@@ -135,8 +138,8 @@ def drumbot(traj2, traj4, traj6, arm):
         #j_angles[4] = traj[i]
         #arms[numarm].set_servo_angle_j(angles=j_angles, is_radian=False)
         jointangles = [0,traj2[i],0,traj4[i],0,traj6[i],0]
-        print(traj4[i])
-        arms[arm].set_servo_angle_j(angles=jointangles, is_radian=False)
+        print(traj6[i])
+        #arms[arm].set_servo_angle_j(angles=jointangles, is_radian=False)
         while track_time < initial_time + 0.004:
             track_time = time.time()
             time.sleep(0.0001)
@@ -157,9 +160,18 @@ def drummer(inq,num):
     # trajz3 = spline_poly(325, 35, .08, .08, .15)
     # trajp3 = spline_poly(-89, -28, .08, .08, .15)
 
-    traj2 = fifth_poly(IP[1], FP[1], 1.25, .25, .254)
-    traj4 = fifth_poly(IP[3], FP[3], 1.25, .45, .054)
-    traj6 = fifth_poly(IP[5], FP[5], .75, 1, .004)
+    #traj2 = fifth_poly(IP[1], FP[1], 1.25, .25, .254)
+    #traj4 = fifth_poly(IP[3], FP[3], 1.25, .45, .054)
+    #traj6 = fifth_poly(IP[5], FP[5], .75, 1, .004)
+
+
+
+    # traj2 = spline_poly(IP[1], FP[1], .7, .08, .25, .254)
+    # traj4 = spline_poly(IP[3], FP[3], .7, .08, .45, .054)
+    # traj6 = spline_poly(IP[5], FP[5], .7, .08,  1, .004)
+    #
+    # plt.plot(np.arange(0, len(traj2), 1), traj2)
+    # plt.show()
 
 
     while True:
@@ -206,7 +218,7 @@ if __name__ == '__main__':
     strumD = 30
     speed = 0.25
     IP = [0, -10.5, 0, 114.3, 0, -71.1, 0]
-    FP = [0, 44, 0, 33.8, 0, -53.9, 0]
+    FP = [0, 44, 0, 33.8, 0, -50.0, 0]
     #notes = np.array([64, 60, 69, 55, 62])
 
 
@@ -228,11 +240,29 @@ if __name__ == '__main__':
     xArm0 = Thread(target=drummer, args=(q0, 0,))
     xArm0.start()
 
+
+    traj2 = spline_poly(IP[1], FP[1], .7, .08, .25, .254)
+    traj4 = spline_poly(IP[3], FP[3], .7, .08, .45, .054)
+    traj6 = spline_poly(IP[5], FP[5], .7, .08,  1, .004)
+
+    #arms[1].get_servo_angle()
+    #plot position
+    plt.plot(np.arange(0, len(traj2), 1), traj2, 'r', np.arange(0, len(traj4), 1), traj4, 'g',np.arange(0, len(traj6), 1), traj6, 'b')
+
+    #plot predicted velocity
+    # dx = 1
+    # dy2 = diff(diff(traj2))/ dx
+    # plt.plot(np.arange(0, len(dy2), 1), dy2, 'r')
+
+    plt.show()
+
+
     #input("start RTP MIDI")
     #rtp_midi = RtpMidi(ROBOT, MyHandler(), PORT)
     #print("test")
     #rtp_midi.run()
     #print("test2")
+
 
 
     while True:
