@@ -132,7 +132,7 @@ def spline_poly(q_i, q_f, ta, tt, ts, dir):
     #ts is stall time (time waiting at bottom)
     traj_ts = np.arange(0, ts, 0.004)
     traj_ts = np.ones(len(traj_ts)-1) * (pc[len(pc)-1] + tfifth_pos[thp])
-    print(traj_ts)
+    #print(traj_ts)
 
     #print("pc")
     #print(pc)
@@ -181,7 +181,7 @@ def drumbot(trajz, trajp, arm, myangles):
         mvpose = [492,0,trajz[i],180,trajp[i],0]
         #print(mvpose[4])
         arms[arm].set_servo_cartesian(mvpose, speed=100, mvacc=2000)
-        myangles = arms[arm].get_servo_angle()
+        results.put(arms[arm].get_servo_angle())
         while track_time < initial_time + 0.004:
             track_time = time.time()
             time.sleep(0.0001)
@@ -237,7 +237,7 @@ def drummer(inq,num, myangles):
     while True:
 
         play = inq.get()
-        print("got!")
+        #print("got!")
         #drumbot(trajz, trajp, num)
         #end of run indef
 
@@ -287,8 +287,11 @@ if __name__ == '__main__':
     q0 = Queue()
     qList = [q0]
 
-    xArm0 = Thread(target=drummer, args=(q0, 0, myangles,))
+    results = Queue()
+
+    xArm0 = Thread(target=drummer, args=(q0, 0, results,))
     xArm0.start()
+
 
     #input("start RTP MIDI")
     # rtp_midi = RtpMidi(ROBOT, MyHandler(), PORT)
@@ -302,4 +305,6 @@ if __name__ == '__main__':
     #    xArm0 = Thread(target=drummer, args=(q0, 0,))
      #   xArm0.start()
         time.sleep(1)
+        myangles = [results.get() for _ in range(results.qsize())]
+        #print(results.qsize())
         print(myangles)
