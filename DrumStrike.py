@@ -183,7 +183,7 @@ def drumbot(traj2, traj4, traj6, arm):
     #j_angles = pos
     track_time = time.time()
     initial_time = time.time()
-    for i in range(len(traj2)):
+    for i in range(min(len(traj2),len(traj4),len(traj6))):
         # run command
         #start_time = time.time()
         #j_angles[4] = traj[i]
@@ -269,14 +269,14 @@ if __name__ == '__main__':
     strumD = 30
     speed = 0.25
     IP = [0, 23.1, 0, 51.4, 0, -60.8, 0]
-    FP = [0, 50, 0, 60, 0, -20, 0]
+    FP = [0, 51, 0, 60, 0, -12, 0]
     #IPN = [0, 26.1, 0, 52.4, 0, -57.8, 0]
     IPN = [0, 23.1, 0, 51.4, 0, -60.8, 0]
     direction = 0 #0 is decreasing range of hit
     #notes = np.array([64, 60, 69, 55, 62])
 
 
-    arm0 = XArmAPI('192.168.1.204')
+    arm0 = XArmAPI('192.168.1.236')
 
     arms = [arm0]
     # arms = [arm1]
@@ -311,19 +311,20 @@ if __name__ == '__main__':
     #rtp_midi.run()
     #print("test2")
 
+    x = 0
 
 
     while True:
 
-        traj2 = spline_poly(IP[1], FP[1], IPN[1], .4, .08, 0, .25)
-        traj4 = spline_poly(IP[3], FP[3], IPN[3], .4, .08, .13, .05)
-        traj6 = spline_poly(IP[5], FP[5], IPN[5], .2, .08, .75, 0)
+        traj2 = spline_poly(IP[1], FP[1], IPN[1], .4 + x, .08, 0, 0)
+        traj4 = spline_poly(IP[3], FP[3], IPN[3], .3 + x, .08, .13, 0)
+        traj6 = spline_poly(IP[5], FP[5], IPN[5], .2 + x, .08, .35, 0)
 
-        plt.plot(np.arange(0, len(traj2), 1), traj2, 'r', np.arange(0, len(traj4), 1), traj4, 'b', np.arange(0, len(traj6), 1), traj6, 'g')
+        plt.plot(np.arange(0, len(traj2)*0.004, 0.004), traj2, 'r', np.arange(0, len(traj4)*0.004, 0.004), traj4, 'b', np.arange(0, len(traj6)*0.004, 0.004), traj6, 'g')
         plt.show()
 
         q0.put(1)
-        time.sleep(2)
+        time.sleep(2.8 - x*30)
 
         for i in range(len(IPN)):
             IP[i] = IPN[i]
@@ -331,14 +332,18 @@ if __name__ == '__main__':
         if IPN[1] > (FP[1] - 6):
             direction = 1
 
-        if IPN[1] < 10:
+        if IPN[1] < 20:
             direction = 0
 
-        if direction == 0:
+        if direction == 0: #smaller, softer
+            x = x +.01
+            FP[1] = FP[1] - 0.4
             IPN[1] = IPN[1] + 3
             IPN[3] = IPN[3] + 1
             IPN[5] = IPN[5] + 3
         elif direction == 1:
+            x = x - .01
+            FP[1] = FP[1] + 0.4
             IPN[1] = IPN[1] - 3
             IPN[3] = IPN[3] - 1
             IPN[5] = IPN[5] - 3
