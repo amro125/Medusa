@@ -270,7 +270,8 @@ if __name__ == '__main__':
     speed = 0.25
     IP = [0, 23.1, 0, 51.4, 0, -60.8, 0]
     FP = [0, 50, 0, 60, 0, -20, 0]
-    IPN = [0, 26.1, 0, 52.4, 0, -57.8, 0]
+    #IPN = [0, 26.1, 0, 52.4, 0, -57.8, 0]
+    IPN = [0, 23.1, 0, 51.4, 0, -60.8, 0]
     direction = 0 #0 is decreasing range of hit
     #notes = np.array([64, 60, 69, 55, 62])
 
@@ -318,13 +319,14 @@ if __name__ == '__main__':
         traj4 = spline_poly(IP[3], FP[3], IPN[3], .4, .08, .2, .05)
         traj6 = spline_poly(IP[5], FP[5], IPN[5], .2, .08, .75, 0)
 
+        plt.plot(np.arange(0, len(traj2), 1), traj2, 'r', np.arange(0, len(traj4), 1), traj4, 'b', np.arange(0, len(traj6), 1), traj6, 'g')
+        plt.show()
 
         q0.put(1)
         time.sleep(2)
 
         for i in range(len(IPN)):
             IP[i] = IPN[i]
-            print("bokay")
 
         if IPN[1] > (FP[1] - 6):
             direction = 1
