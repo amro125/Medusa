@@ -114,12 +114,15 @@ def fifth_poly(q_i, q_f, t):
     traj_pos = a0 + a1 * traj_t + a2 * traj_t ** 2 + a3 * traj_t ** 3 + a4 * traj_t ** 4 + a5 * traj_t ** 5
     return traj_pos
 
-def spline_poly(q_i, q_f, ta, tt, ts):
-    #spline poly for drumming, where ta is time of acceleration (5th order poly going 1/6th the total dist)
-    #and tt is the time for the striker to hit, turn around, and go back to original position (another 5th order poly)
+def spline_poly(q_i, q_f, q_in, ta, tt, ttopstop, tbotstop):
+
+    #qi is initial pos, qf is final pos (strike), qin is new initial (return pos)
 
     #initial accel (using first half of a 5th order poly)
     #ta is double the time till max acceleration (time doing 5th order poly)
+
+    ########### this code calculates the trajectory for the first half (the way down) #############
+
     traj_ta = np.arange(0, ta, 0.004)
     dq_i = 0
     dq_f = 0
@@ -128,19 +131,74 @@ def spline_poly(q_i, q_f, ta, tt, ts):
     a0 = q_i
     a1 = dq_i
     a2 = 0.5 * ddq_i
-    a3 = 1 / (2 * ta ** 3) * (20 * (q_f - q_i) / 6 - (8 * dq_f + 12 * dq_i) * ta - (3 * ddq_f - ddq_i) * ta ** 2)
-    a4 = 1 / (2 * ta ** 4) * (30 * (q_i - q_f) / 6 + (14 * dq_f + 16 * dq_i) * ta + (3 * ddq_f - 2 * ddq_i) * ta ** 2)
-    a5 = 1 / (2 * ta ** 5) * (12 * (q_f - q_i) / 6 - (6 * dq_f + 6 * dq_i) * ta - (ddq_f - ddq_i) * ta ** 2)
+    a3 = 1 / (2 * ta ** 3) * (20 * (q_f - q_i)/2 - (8 * dq_f + 12 * dq_i) * ta - (3 * ddq_f - ddq_i) * ta ** 2)
+    a4 = 1 / (2 * ta ** 4) * (30 * (q_i - q_f)/2 + (14 * dq_f + 16 * dq_i) * ta + (3 * ddq_f - 2 * ddq_i) * ta ** 2)
+    a5 = 1 / (2 * ta ** 5) * (12 * (q_f - q_i)/2 - (6 * dq_f + 6 * dq_i) * ta - (ddq_f - ddq_i) * ta ** 2)
     fifth_pos = a0 + a1 * traj_ta + a2 * traj_ta ** 2 + a3 * traj_ta ** 3 + a4 * traj_ta ** 4 + a5 * traj_ta ** 5
     fifth_vel = a1 + 2 * a2 * traj_ta + 3 * a3 * traj_ta ** 2 + 4 * a4 * traj_ta ** 3 + 5 * a5 * traj_ta ** 4
 
-    # print("fifth pos")
-    # print(fifth_pos)
-    # halfway point of acceleration array (hp)
+    #halfway point of acceleration array (hp)
     hp = math.floor(len(fifth_pos) / 2)
     delta1 = abs(fifth_pos[0] - fifth_pos[hp])
-    # speed halfway (max speed)
+    #speed halfway (max speed)
     hv = fifth_vel[hp]
+
+
+    #5th order turnaround
+    #tt is time for turning around
+    traj_tt = np.arange(0, tt, 0.004)
+    dq_i = hv
+    dq_f = -hv
+    ddq_i = 0
+    ddq_f = 0
+    #nq_i = pc[len(pc)-1] # new initial pos is the end of constant velocity part
+    a0 = 0
+    a1 = dq_i
+    a2 = 0.5 * ddq_i
+    a3 = 1 / (2 * ta ** 3) * (20 * (0) - (8 * dq_f + 12 * dq_i) * ta - (3 * ddq_f - ddq_i) * ta ** 2)
+    a4 = 1 / (2 * ta ** 4) * (30 * (0) + (14 * dq_f + 16 * dq_i) * ta + (3 * ddq_f - 2 * ddq_i) * ta ** 2)
+    a5 = 1 / (2 * ta ** 5) * (12 * (0) - (6 * dq_f + 6 * dq_i) * ta - (ddq_f - ddq_i) * ta ** 2)
+    tfifth_pos = a0 + a1 * traj_ta + a2 * traj_ta ** 2 + a3 * traj_ta ** 3 + a4 * traj_ta ** 4 + a5 * traj_ta ** 5
+
+    thp = math.floor(len(tfifth_pos) / 2) #halfway point of turnaround traj
+    delta2 = abs(tfifth_pos[0] - tfifth_pos[thp])
+
+    #constant speed
+    #tc is time at constant speed
+    delta3 = abs(q_i - q_f) - delta1 - delta2
+    if(delta3 < 0):
+        print("accel time and turnaround time too big")
+
+    tc = delta3 / abs(hv)
+
+    traj_tc = np.arange(0, tc, 0.004)
+    pc = fifth_pos[hp] + traj_tc*hv
+
+    # stall time at top / bottom
+    traj_top = np.ones(int(ttopstop / 0.004)) * q_i  # time stopped at top of trajectory, before strike
+    traj_bot = np.ones(int(tbotstop / 0.004)) * q_f  # time stopped at bottom of trajectory, after strike (half of the total time)
+
+    ########### this code calculates the trajectory for the second half (the way up) #############
+
+    traj_ta = np.arange(0, ta, 0.004)
+    dq_i = 0
+    dq_f = 0
+    ddq_i = 0
+    ddq_f = 0
+    a0 = q_in
+    a1 = dq_i
+    a2 = 0.5 * ddq_i
+    a3 = 1 / (2 * ta ** 3) * (20 * (q_f - q_in) / 2 - (8 * dq_f + 12 * dq_i) * ta - (3 * ddq_f - ddq_i) * ta ** 2)
+    a4 = 1 / (2 * ta ** 4) * (30 * (q_in - q_f) / 2 + (14 * dq_f + 16 * dq_i) * ta + (3 * ddq_f - 2 * ddq_i) * ta ** 2)
+    a5 = 1 / (2 * ta ** 5) * (12 * (q_f - q_in) / 2 - (6 * dq_f + 6 * dq_i) * ta - (ddq_f - ddq_i) * ta ** 2)
+    fifth_pos2 = a0 + a1 * traj_ta + a2 * traj_ta ** 2 + a3 * traj_ta ** 3 + a4 * traj_ta ** 4 + a5 * traj_ta ** 5
+    fifth_vel2 = a1 + 2 * a2 * traj_ta + 3 * a3 * traj_ta ** 2 + 4 * a4 * traj_ta ** 3 + 5 * a5 * traj_ta ** 4
+
+    # halfway point of acceleration array (hp)
+    hp2 = math.floor(len(fifth_pos2) / 2)
+    delta1 = abs(fifth_pos2[0] - fifth_pos2[hp2])
+    # speed halfway (max speed)
+    hv = fifth_vel2[hp2]
 
     # 5th order turnaround
     # tt is time for turning around
@@ -156,50 +214,43 @@ def spline_poly(q_i, q_f, ta, tt, ts):
     a3 = 1 / (2 * ta ** 3) * (20 * (0) - (8 * dq_f + 12 * dq_i) * ta - (3 * ddq_f - ddq_i) * ta ** 2)
     a4 = 1 / (2 * ta ** 4) * (30 * (0) + (14 * dq_f + 16 * dq_i) * ta + (3 * ddq_f - 2 * ddq_i) * ta ** 2)
     a5 = 1 / (2 * ta ** 5) * (12 * (0) - (6 * dq_f + 6 * dq_i) * ta - (ddq_f - ddq_i) * ta ** 2)
-    tfifth_pos = a0 + a1 * traj_ta + a2 * traj_ta ** 2 + a3 * traj_ta ** 3 + a4 * traj_ta ** 4 + a5 * traj_ta ** 5
+    tfifth_pos2 = a0 + a1 * traj_ta + a2 * traj_ta ** 2 + a3 * traj_ta ** 3 + a4 * traj_ta ** 4 + a5 * traj_ta ** 5
 
-    thp = math.floor(len(tfifth_pos) / 2)  # halfway point of turnaround traj
-    delta2 = abs(tfifth_pos[0] - tfifth_pos[thp])
+    thp2 = math.floor(len(tfifth_pos2) / 2)  # halfway point of turnaround traj
+    delta2 = abs(tfifth_pos2[0] - tfifth_pos2[thp2])
 
     # constant speed
     # tc is time at constant speed
-    delta3 = abs(q_i - q_f) - delta1 - delta2
+    delta3 = abs(q_in - q_f) - delta1 - delta2
     if (delta3 < 0):
         print("accel time and turnaround time too big")
 
     tc = delta3 / abs(hv)
 
     traj_tc = np.arange(0, tc, 0.004)
-    pc = fifth_pos[hp] + traj_tc * hv
+    pc2 = fifth_pos2[hp2] + traj_tc * hv
 
-    # ts is stall time (time waiting at bottom)
-    traj_ts = np.arange(0, ts, 0.004)
-    traj_ts = np.ones(len(traj_ts) - 1) * (pc[len(pc) - 1] + tfifth_pos[thp])
+    #stall time at top / bottom
+    traj_top2 = np.ones(int(ttopstop / 0.004)) * q_in  # time stopped at top of trajectory, before strike
+    traj_bot2 = np.ones(int(tbotstop / 0.004)) * q_f  # time stopped at bottom of trajectory, after strike (half of the total time)
 
-    # print("pc")
-    # print(pc)
+    half_traj1 = np.concatenate((traj_top,fifth_pos[0:hp], pc, pc[len(pc)-1] + tfifth_pos[0:thp], traj_bot))
+    half_traj2 = np.flip(np.concatenate((traj_top2, fifth_pos2[0:hp2], pc2, pc2[len(pc2) - 1] + tfifth_pos2[0:thp2], traj_bot2)))
 
-    # print("tfifth_pos")
-    # print(pc[len(pc)-1] + tfifth_pos)
-
-    half_traj = np.concatenate((fifth_pos[0:hp], pc, pc[len(pc) - 1] + tfifth_pos[0:thp], traj_ts))
-    full_traj = np.append(half_traj, np.flip(half_traj))
+    full_traj = np.append(half_traj1,half_traj2)
 
     return full_traj
 
-def drumbot(trajz, trajp, arm):
+def drumbot(traj2, traj4, traj6, arm):
 
     #j_angles = pos
     track_time = time.time()
     initial_time = time.time()
-    for i in range(len(trajz)):
+    for i in range(len(traj2)):
         # run command
-        #start_time = time.time()
-        #j_angles[4] = traj[i]
-        #arms[numarm].set_servo_angle_j(angles=j_angles, is_radian=False)
-        mvpose = [492,0,trajz[i],180,trajp[i],0]
-        #print(mvpose[2])
-        arms[arm].set_servo_cartesian(mvpose, speed=100, mvacc=2000)
+        jointangles = [0, traj2[i], 0, traj4[i], 0, traj6[i], 0]
+        print(traj6[i])
+        arms[arm].set_servo_angle_j(angles=jointangles, is_radian=False)
         while track_time < initial_time + 0.004:
             track_time = time.time()
             time.sleep(0.0001)
@@ -260,32 +311,29 @@ def prepGesture(numarm, traj):
 
 def drummer(inq,num):
     i = 1
-    #uptraj = fifth_poly(-strumD/2, strumD/2, speed)
-    #downtraj = fifth_poly(strumD/2, -strumD/2, speed)
-    #both = [uptraj, downtraj]
-    #tension = fifth_poly(0, -20, 0.5)
-    #release = fifth_poly(-20, 0, 0.75)
 
-    #downtrajz= fifth_poly(325, 20, .3)
-    #uptrajz= fifth_poly(20, 325, .3)
-    #downtrajp= fifth_poly(-89, -36, .3)
-    #uptrajp = fifth_poly(-36, -89, .3)
-    #trajz = np.append(downtrajz, uptrajz)
-    #trajp = np.append(downtrajp, uptrajp)
+    # hits for the snare (and bodhron for now)
 
     #single hit
-    #change the 18
-    trajz = spline_poly(325, 18, .10, .04, 0.01)
-    trajp = spline_poly(-89, -30, .10, .04, 0.01)
-
+    # trajz = spline_poly(325, 18, .10, .04, 0.01)
+    # trajp = spline_poly(-89, -30, .10, .04, 0.01)
+    s_traj2 = spline_poly(DRUM1IP[1], DRUM1FP[1], DRUM1IP_N[1], .4, .08, 0, .25)
+    s_traj4 = spline_poly(DRUM1IP[3], DRUM1FP[3], DRUM1IP_N[3], .4, .08, .2, .05)
+    s_traj6 = spline_poly(DRUM1IP[5], DRUM1FP[5], DRUM1IP_N[5], .2, .08, .75, 0)
 
     #double hit
-    trajz2 = spline_poly(325, 18, .10, .04, 0.1)
-    trajp2 = spline_poly(-89, -30, .10, .04, 0.1)
+    # trajz2 = spline_poly(325, 18, .10, .04, 0.1)
+    # trajp2 = spline_poly(-89, -30, .10, .04, 0.1)
+    d_traj2 = spline_poly(DRUM1IP[1], DRUM1FP[1], DRUM1IP_N[1], .4, .08, 0, .35)
+    d_traj4 = spline_poly(DRUM1IP[3], DRUM1FP[3], DRUM1IP_N[3], .4, .08, .2, .15)
+    d_traj6 = spline_poly(DRUM1IP[5], DRUM1FP[5], DRUM1IP_N[5], .2, .08, .75, .1)
 
     #triple hit
-    trajz3 = spline_poly(325, 18, .10, .04, 0.15)
-    trajp3 = spline_poly(-89, -30, .10, .04, 0.15)
+    # trajz3 = spline_poly(325, 18, .10, .04, 0.15)
+    # trajp3 = spline_poly(-89, -30, .10, .04, 0.15)
+    t_traj2 = spline_poly(DRUM1IP[1], DRUM1FP[1], DRUM1IP_N[1], .4, .08, 0, .4)
+    t_traj4 = spline_poly(DRUM1IP[3], DRUM1FP[3], DRUM1IP_N[3], .4, .08, .2, .2)
+    t_traj6 = spline_poly(DRUM1IP[5], DRUM1FP[5], DRUM1IP_N[5], .2, .08, .75, .15)
 
     # bodharn drum chime
     uptraj1 = fifth_poly(0, -103.1, 1.5)
@@ -334,11 +382,11 @@ def drummer(inq,num):
         play = inq.get()
         print("got!")
         if play == 0:
-            drumbot(trajz, trajp, num)
+            drumbot(s_traj2, s_traj4, s_traj6, num)
         elif play == 1:
-            drumbot(trajz2, trajp2, num)
+            drumbot(d_traj2, d_traj4, d_traj6, num)
         elif play == 2:
-            drumbot(trajz3, trajp3, num)
+            drumbot(t_traj2, t_traj4, t_traj6, num)
         elif play == 3:
             chimbot(traj1, traj2, traj4, traj6, num)
         elif play == 4:
@@ -384,7 +432,9 @@ if __name__ == '__main__':
     IP2 = [1.5, 81.6, 0.0, 120, -strumD/2, 54.2, -45]
     IP3 = [2.5, 81, 0, 117.7, -strumD/2, 50.5, -45]
     IP4 = pos = [-1.6, 81.8, 0, 120, -strumD/2, 50.65, -45]         # [-3.9, 65, 3.5, 100.3, -strumD/2, 42.7, 101.1]
-    DRUM1 = [0.0, 23.1, 0.0, 51.4, 0.0, -60.8, 0.0] #Snare
+    DRUM1IP = [0.0, 23.1, 0.0, 51.4, 0.0, -60.8, 0.0] #Snare
+    DRUM1FP = [0, 50, 0, 60, 0, -20, 0]
+    DRUM1IP_N = [0.0, 23.1, 0.0, 51.4, 0.0, -60.8, 0.0]
     DRUM2 = [0.0, 23.1, 0.0, 51.4, 0.0, -60.8, 0.0]  #Bodharn
     notes = np.array([64, 60, 69, 55, 62])
 
