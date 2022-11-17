@@ -3,6 +3,7 @@ import sys
 import time
 import numpy as np
 import math
+import matplotlib.pyplot as plt
 
 #from rtpmidi import RtpMidi
 #from pymidi import server
@@ -262,7 +263,7 @@ if __name__ == '__main__':
     global strumD
     global speed
     global notes
-    global myangles
+
 
     strumD = 30
     speed = 0.25
@@ -299,12 +300,31 @@ if __name__ == '__main__':
     #rtp_midi.run()
     #print("test2")
 
-
+    myangle2 = []
+    myangle4 = []
+    myangle6 = []
     while True:
         q0.put(1)
-    #    xArm0 = Thread(target=drummer, args=(q0, 0,))
-     #   xArm0.start()
-        time.sleep(1)
-        myangles = [results.get() for _ in range(results.qsize())]
+        #time.sleep(1)
+
+        t = 0
+        while t < 1:
+
+             time.sleep(0.004)
+             t += 0.004
+             myangle2.append(arm0.get_servo_angle()[1][1])
+             myangle4.append(arm0.get_servo_angle()[1][3])
+             myangle6.append(arm0.get_servo_angle()[1][5])
+
+        #print(myangle2)
+        #myangles = [results.get() for _ in range(results.qsize())]
+        #plt.plot(np.arange(0, len(myangle2), 1), myangle2, 'r')
+        plt.plot(np.arange(0, len(myangle2), 1), myangle2, 'r', np.arange(0, len(myangle4), 1), myangle4, 'b', np.arange(0, len(myangle6), 1), myangle6, 'g')
+        plt.show()
+        #
         #print(results.qsize())
-        print(myangles)
+        #myangles2 = myangles[0:][0:]
+        #print(myangles2)
+
+        #print(myangles)
+
