@@ -189,7 +189,7 @@ def drumbot(traj2, traj4, traj6, arm):
         #j_angles[4] = traj[i]
         #arms[numarm].set_servo_angle_j(angles=j_angles, is_radian=False)
         jointangles = [0,traj2[i],0,traj4[i],0,traj6[i],0]
-        print(traj6[i])
+        print(traj2[i])
         arms[arm].set_servo_angle_j(angles=jointangles, is_radian=False)
         while track_time < initial_time + 0.004:
             track_time = time.time()
@@ -317,22 +317,22 @@ if __name__ == '__main__':
     while True:
 
         traj2 = spline_poly(IP[1], FP[1], IPN[1], .4 + x, .08, 0, 0)
-        traj4 = spline_poly(IP[3], FP[3], IPN[3], .3 + x, .08, .13, 0)
+        traj4 = spline_poly(IP[3], FP[3], IPN[3], .32 + x, .08, .13, 0)
         traj6 = spline_poly(IP[5], FP[5], IPN[5], .2 + x, .08, .35, 0)
 
         plt.plot(np.arange(0, len(traj2)*0.004, 0.004), traj2, 'r', np.arange(0, len(traj4)*0.004, 0.004), traj4, 'b', np.arange(0, len(traj6)*0.004, 0.004), traj6, 'g')
-        plt.show()
+        #plt.show()
 
         q0.put(1)
-        time.sleep(2.8 - x*30)
+        time.sleep(2.5 - x*30)
 
         for i in range(len(IPN)):
             IP[i] = IPN[i]
 
-        if IPN[1] > (FP[1] - 6):
+        if IPN[1] > (FP[1] - 9):
             direction = 1
 
-        if IPN[1] < 20:
+        if IPN[1] < 23:
             direction = 0
 
         if direction == 0: #smaller, softer
