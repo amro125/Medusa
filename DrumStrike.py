@@ -316,7 +316,7 @@ if __name__ == '__main__':
     while True:
 
         traj2 = spline_poly(IP[1], FP[1], IPN[1], .4, .08, 0, .25)
-        traj4 = spline_poly(IP[3], FP[3], IPN[3], .4, .08, .2, .05)
+        traj4 = spline_poly(IP[3], FP[3], IPN[3], .4, .08, .13, .05)
         traj6 = spline_poly(IP[5], FP[5], IPN[5], .2, .08, .75, 0)
 
         plt.plot(np.arange(0, len(traj2), 1), traj2, 'r', np.arange(0, len(traj4), 1), traj4, 'b', np.arange(0, len(traj6), 1), traj6, 'g')
