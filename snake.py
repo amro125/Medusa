@@ -9,6 +9,7 @@ from queue import Queue
 from threading import Thread
 from xarm.wrapper import XArmAPI
 import random
+
 from GuitarBotUDP import GuitarBotUDP
 
 
@@ -32,10 +33,12 @@ class MyHandler(server.Handler):
 
 
             if chn == 13:  # this means its channel 14!!!!!
+
                 if command.command == 'note_on':
                     print(chn)
                     key = command.params.key.__int__()
                     velocity = command.params.velocity
+
                     rob = np.where(notes == key)[0]
                     if len(rob) > 0:
                         print(int(rob))
