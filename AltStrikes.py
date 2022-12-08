@@ -3,7 +3,7 @@ import sys
 import time
 import numpy as np
 import math
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 #from rtpmidi import RtpMidi
 #from pymidi import server
@@ -24,7 +24,7 @@ def setup():
         # curIP = IP[a]
         # arms[a].set_servo_angle(angle=curIP, wait=False, speed=10, acceleration=0.25, is_radian=False)
 
-        arms[a].set_servo_angle(angle=[0, 23.1, 0, 51.4, 0, -60.8, 0], wait=False, speed=10, acceleration=0.25, is_radian=False)
+        arms[a].set_servo_angle(angle=[30.0, 67.2, 21.8, 109.1, 94.7, -94.9, -31.4], wait=False, speed=10, acceleration=0.25, is_radian=False)
 
 def spline_poly(q_i, q_f, q_in, ta, tt, ttopstop, tbotstop):
 
@@ -178,17 +178,27 @@ def fifth_poly(q_i, q_f, t, ttopstop, tbotstop):
     return full_traj
 
 
-def drumbot(traj2, traj4, traj6, arm):
+def drumbot(traj1, traj2, traj3, traj4, traj5, traj6, traj7, arm):
 
     #j_angles = pos
     track_time = time.time()
     initial_time = time.time()
+
+    # print(len(traj1))
+    # print(len(traj2))
+    # print(len(traj3))
+    # print(len(traj4))
+    # print(len(traj5))
+    # print(len(traj6))
+    # print(len(traj7))
+
     for i in range(min(len(traj2),len(traj4),len(traj6))):
+    #for i in range(len(traj2)):
         # run command
         #start_time = time.time()
         #j_angles[4] = traj[i]
         #arms[numarm].set_servo_angle_j(angles=j_angles, is_radian=False)
-        jointangles = [0,traj2[i],0,traj4[i],0,traj6[i],0]
+        jointangles = [traj1[i],traj2[i],traj3[i],traj4[i],traj5[i],traj6[i],traj7[i]]
         print(traj2[i])
         arms[arm].set_servo_angle_j(angles=jointangles, is_radian=False)
         while track_time < initial_time + 0.004:
@@ -217,7 +227,7 @@ def drummer(inq,num):
 
 
 
-    # traj2 = spline_poly(IP[1], FP[1], .7, .08, .25, .254)
+    # traj2 = spline_poly(IP[1], FP[1]e, .7, .08, .25, .254)
     # traj4 = spline_poly(IP[3], FP[3], .7, .08, .45, .054)
     # traj6 = spline_poly(IP[5], FP[5], .7, .08,  1, .004)
     #
@@ -232,7 +242,7 @@ def drummer(inq,num):
         #print(i)
         print("got!")
 
-        drumbot(traj2, traj4, traj6, num)
+        drumbot(traj1, traj2, traj3, traj4, traj5, traj6, traj7, num)
 
         #end of run indef
 
@@ -268,11 +278,28 @@ if __name__ == '__main__':
 
     strumD = 30
     speed = 0.25
-    IP = [0, 23.1, 0, 51.4, 0, -60.8, 0]
-    FP = [0, 51, 0, 60, 0, -12, 0]
-    #IPN = [0, 26.1, 0, 52.4, 0, -57.8, 0]
-    IPN = [0, 23.1, 0, 51.4, 0, -60.8, 0]
-    direction = 0 #0 is decreasing range of hit
+
+    #IP1 is rimshot (rim and skin)
+    IP1 = [30.0, 67.2, 21.8, 109.1, 94.7, -94.9, -31.4]
+    FP1 = [30.1, 75.8, 21.9, 90.4, 94.8, -80.1, -31.5]
+    #IPN = [30.1, 67.2, 21.9, 109.1, 94.8, -94.9, -31.5]
+
+    #IP2 is pure rim
+    IP2 = [0, 23.1, 0, 51.4, 0, -60.8, 0]
+    FP2 = [0.1, 65, 0.1, 88.1, 0.1, -8, 0.1]
+
+    # #IP3 is pure rim
+    # IP2 = [0, 23.1, 0, 51.4, 0, -60.8, 0]
+    # FP2 = [0.1, 60, 0.1, 88.1, 0.1, 10.2, 0.1]
+
+    #IP3 is pure wood
+    IP3 = [0, 41.6, -16.1, 101.7, 0, 6, 0]
+    FP3 = [0.1, 60, -16.0, 81.3, 0.1, 8.2, 0.1]
+
+    #IP4 is middle snare
+    IP4 = [0, 23.1, 0, 51.4, 0, -60.8, 0]
+    FP4 = [0.1, 30, 0.1, 60, 0.1, -12, 0.1]
+    #direction = 0 #0 is decreasing range of hit
     #notes = np.array([64, 60, 69, 55, 62])
 
 
@@ -311,42 +338,52 @@ if __name__ == '__main__':
     #rtp_midi.run()
     #print("test2")
 
-    x = 0
-
+    count = 0
 
     while True:
 
-        traj2 = spline_poly(IP[1], FP[1], IPN[1], .4 + x, .08, 0, 0)
-        traj4 = spline_poly(IP[3], FP[3], IPN[3], .32 + x, .08, .13, 0)
-        traj6 = spline_poly(IP[5], FP[5], IPN[5], .2 + x, .08, .35, 0)
-
-        plt.plot(np.arange(0, len(traj2)*0.004, 0.004), traj2, 'r', np.arange(0, len(traj4)*0.004, 0.004), traj4, 'b', np.arange(0, len(traj6)*0.004, 0.004), traj6, 'g')
+        if(count == 0):
+            traj1 = spline_poly(IP1[0], FP1[0], IP2[0], .2, .08, 0, .32)
+            traj2 = spline_poly(IP1[1], FP1[1], IP2[1], .4, .08, 0, 0)
+            traj3 = spline_poly(IP1[2], FP1[2], IP2[2], .2, .08, 0, .32)
+            traj4 = spline_poly(IP1[3], FP1[3], IP2[3], .32, .08, 0, 0.18)
+            traj5 = spline_poly(IP1[4], FP1[4], IP2[4], .2, .08, 0, 0.32)
+            traj6 = spline_poly(IP1[5], FP1[5], IP2[5], .2, .08, 0, 0.32)
+            traj7 = spline_poly(IP1[6], FP1[6], IP2[6], .2, .08, 0, 0.32)
+        if(count == 1):
+            traj1 = spline_poly(IP2[0], FP2[0], IP3[0], .2, .08, 0, .32)
+            traj2 = spline_poly(IP2[1], FP2[1], IP3[1], .4, .08, 0, 0)
+            traj3 = spline_poly(IP2[2], FP2[2], IP3[2], .2, .08, 0, .32)
+            traj4 = spline_poly(IP2[3], FP2[3], IP3[3], .32, .08, 0, 0.18)
+            traj5 = spline_poly(IP2[4], FP2[4], IP3[4], .2, .08, 0, 0.32)
+            traj6 = spline_poly(IP2[5], FP2[5], IP3[5], .2, .08, 0, 0.32)
+            traj7 = spline_poly(IP2[6], FP2[6], IP3[6], .2, .08, 0, 0.32)
+        if(count == 2):
+            traj1 = spline_poly(IP3[0], FP3[0], IP4[0], .2, .08, 0, .32)
+            traj2 = spline_poly(IP3[1], FP3[1], IP4[1], .4, .08, 0, 0)
+            traj3 = spline_poly(IP3[2], FP3[2], IP4[2], .2, .08, 0, .32)
+            traj4 = spline_poly(IP3[3], FP3[3], IP4[3], .32, .08, 0, 0.18)
+            traj5 = spline_poly(IP3[4], FP3[4], IP4[4], .2, .08, 0, 0.32)
+            traj6 = spline_poly(IP3[5], FP3[5], IP4[5], .2, .08, 0, 0.32)
+            traj7 = spline_poly(IP3[6], FP3[6], IP4[6], .2, .08, 0, 0.32)
+        if(count == 3):
+            traj1 = spline_poly(IP4[0], FP4[0], IP1[0], .2, .08, 0, .32)
+            traj2 = spline_poly(IP4[1], FP4[1], IP1[1], .4, .08, 0, 0)
+            traj3 = spline_poly(IP4[2], FP4[2], IP1[2], .2, .08, 0, .32)
+            traj4 = spline_poly(IP4[3], FP4[3], IP1[3], .32, .08, 0, 0.18)
+            traj5 = spline_poly(IP4[4], FP4[4], IP1[4], .2, .08, 0, 0.32)
+            traj6 = spline_poly(IP4[5], FP4[5], IP1[5], .2, .08, 0, 0.32)
+            traj7 = spline_poly(IP4[6], FP4[6], IP1[6], .2, .08, 0, 0.32)
+        #plt.plot(np.arange(0, len(traj2)*0.004, 0.004), traj2, 'r', np.arange(0, len(traj4)*0.004, 0.004), traj4, 'b', np.arange(0, len(traj6)*0.004, 0.004), traj6, 'g')
         #plt.show()
 
         q0.put(1)
-        time.sleep(2.5 - x*30)
+        time.sleep(2.5)
 
-        for i in range(len(IPN)):
-            IP[i] = IPN[i]
+        count = count + 1
+        if(count == 4):
+            count = 0
 
-        if IPN[1] > (FP[1] - 9):
-            direction = 1
-
-        if IPN[1] < 23:
-            direction = 0
-
-        if direction == 0: #smaller, softer
-            x = x +.01
-            FP[1] = FP[1] - 0.4
-            IPN[1] = IPN[1] + 3
-            IPN[3] = IPN[3] + 1
-            IPN[5] = IPN[5] + 3
-        elif direction == 1:
-            x = x - .01
-            FP[1] = FP[1] + 0.4
-            IPN[1] = IPN[1] - 3
-            IPN[3] = IPN[3] - 1
-            IPN[5] = IPN[5] - 3
 
         #xArm0 = Thread(target=drummer, args=(q0, 0,))
         #xArm0.start()

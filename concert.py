@@ -333,6 +333,11 @@ def strummer(inq,num):
             i += 1
         elif play == 2: # u traj strum
             direction = i % 2
+            # time.sleep(delayarray[direction, num])  # time delay before playing
+            # print(num)
+            # print(delayarray[0, num])
+            # print(bothu[direction])
+            # input("am I in the right place?")
             robomove(num, bothu[direction])
             i += 1
         elif play == 3: #Wavey strum
@@ -358,7 +363,7 @@ if __name__ == '__main__':
     strumD = 30
     speed = 0.25
     IP0 = [-1, 87.1, -2, 126.5, -strumD/2, 51.7, -45]
-    IP1 = [2.26, 86.0, 0, 127.1, -strumD/2, 50.1, -45]
+    IP1 = [2.1, 86.3, 0, 127.1, -strumD/2, 50.1, -45]
     IP2 = [1.5, 81.6, 0.0, 120, -strumD/2, 54.2, -45]
     IP3 = [-0.2, 83.8, 0, 120, -strumD/2, 50.75, -45]
     IP4 = [-1.6, 81.8, 0, 120, -strumD/2, 50.75, -45]         # [-3.9, 65, 3.5, 100.3, -strumD/2, 42.7, 101.1]

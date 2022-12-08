@@ -3,11 +3,16 @@ import sys
 import time
 import numpy as np
 import math
+import positions
 
 # from rtpmidi import RtpMidi
 from queue import Queue
 from threading import Thread
 from xarm.wrapper import XArmAPI
+import positions
+
+
+# def sinmaker(numarm):
 
 def setup():
     for a in range(len(arms)):
@@ -55,6 +60,9 @@ def wave(inq, numarm):
                     time.sleep(0.0001)
                 initial_time += 0.004
 
+def testfunction():
+    print(positions.testglobal)
+
 if __name__ == '__main__':
     ROBOT = "xArms"
     PORT = 5004
@@ -63,7 +71,8 @@ if __name__ == '__main__':
     global strumD
     global speed
     global notes
-
+    global testglobal
+    testglobal = 2
     strumD = 0
     speed = 0.25
     amp2 = 5

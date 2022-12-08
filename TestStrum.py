@@ -54,13 +54,13 @@ def fifth_poly(q_i, q_f, t):
 
 if __name__ == '__main__':
     # global arm1
-    arm1 = XArmAPI('192.168.1.226')
+    arm1 = XArmAPI('192.168.1.203')
     global arms
     arms = [arm1]
     strumD = 30
     speed = 0.25
     global pos
-    pos = [2.1, 86.3, 0, 127.1, -strumD/2, 50.1, -45]
+    pos = [-0.2, 83.8, 0, 120, -strumD/2, 50.75, -45]
     # pos = [2.5, 81, 0, 117.7, -strumD/2, 50.5, -45]
     # pos =[-4.9, 65, 3.5, 100.3, -strumD/2, 43.4, 92.3]
     # pos = [-4.9, 45, 3.5, 70.7, -strumD/2, 43.4, 92.3]
@@ -90,7 +90,7 @@ if __name__ == '__main__':
         strumbot(both[direction])
         i += 1
 
-        time.sleep(.333)
+        input()
         #
         # direction = i % 2
         # strumbot(both[direction])
