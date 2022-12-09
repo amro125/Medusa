@@ -52,7 +52,7 @@ class MyHandler(server.Handler):
                     velocity = command.params.velocity
                     rob = np.where(notes == key)[0]
                     if len(rob) > 0:
-                        strumtype = chn - 12
+                        strumtype = velocity
                         print(int(rob))
                         qList[int(rob)].put(strumtype)
             if chn == 11:  # this means its channel 13!!!!!
@@ -324,25 +324,28 @@ def strummer(inq,num):
             # posetoPose(,)
         # print("got!")
 
-        if play == 1: # this is normal playing
-            direction = i % 2
-            time.sleep(delayarray[direction, num]) #time delay before playing
-            print(num)
-            print(delayarray[0, num])
-            strumbot(num, bothnorm[direction])
-            i += 1
-        elif play == 2: # u traj strum
-            direction = i % 2
-            robomove(num, bothu[direction])
-            i += 1
-        elif play == 3: #Wavey strum
-            robomove(num, wave)
-        elif play == 4: # circle
-            robomove(num, circ)
-        elif play == 5:
-            prepGesture(num, tension)
-            time.sleep(0.25)
-            prepGesture(num, release)
+        # if play == 1: # this is normal playing
+        #     direction = i % 2
+        #     time.sleep(delayarray[direction, num]) #time delay before playing
+        #     print(num)
+        #     print(delayarray[0, num])
+        #     strumbot(num, bothnorm[direction])
+        #     i += 1
+        # elif play == 2: # u traj strum
+        #     direction = i % 2
+        #     robomove(num, bothu[direction])
+        #     i += 1
+        # elif play == 3: #Wavey strum
+        #     robomove(num, wave)
+        # elif play == 4: # circle
+        #     robomove(num, circ)
+        # elif play == 5:
+        #     prepGesture(num, tension)
+        #     time.sleep(0.25)
+        #     prepGesture(num, release)
+
+
+
 
 
 # Press the green button in the gutter to run the script.
@@ -366,14 +369,29 @@ if __name__ == '__main__':
     DRUM2 = [0.0, 23.1, 0.0, 51.4, 0.0, -60.8, 0.0] #DRUMMMING
     notes = np.array([64, 60, 69, 55, 62])
 
+    ##TENSE INITIAL POSITIONS
+    TIP0 = [-strumD/2, 37, 0, 41.4, 0, 29.2, -45] #208
+    TIP1 = [-strumD/2, 36.5, 0, 42.2, 0, 28.8, -45] #226
+    TIP2 = [-strumD/2, 35.3, 0, 49.5, -4.7, 44.6, -45] #244
+    TIP3 = [-strumD/2, 35.3, 0, 41.2, -4.7, 28, -45] #203
+    TIP4 = [-strumD/2, 35.3, 0, 45.6, -4.7, 33.6, -45] #237
+
+    ##RELEASE INITIAL POSITIONS
+    RIP0 = [-strumD/2, 89, 0, 130, 0, 55.8, -45] #208
+    RIP1 = [-strumD/2, 88.3, 0, 132.3, 0, 55.4, -45] #226
+    RIP2 = [-strumD/2, 90.6, 0, 138.5, -4.7, 70.5, -45] #244
+    RIP3 = [-strumD/2, 92.5, 0, 138, -4.7, 67.6, -45] #203
+    RIP4 = [-strumD/2, 93.2, 0, 142.9, -4.7, 68.4, -45] #237
 
 
 
+    TIP = [TIP0, TIP1, TIP2, TIP3, TIP4]
+    RIP = [RIP0, RIP1, RIP2, RIP3, RIP4]
     IP = [IP0, IP1, IP2, IP3, IP4, DRUM1, DRUM2]
     global AllIP
 
     print(positions.IPu)
-    AllIP = [IP, positions.IPu, positions.IPs, positions.IPc]
+    AllIP = [IP, positions.IPu, positions.IPs, positions.IPc, TIP, RIP]
     arm0 = XArmAPI('192.168.1.208')
     arm1 = XArmAPI('192.168.1.226')
     arm2 = XArmAPI('192.168.1.244')

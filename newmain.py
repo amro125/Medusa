@@ -34,7 +34,13 @@ class MyHandler(server.Handler):
             if chn == 2:  # this means its channel 3 !!!!!
                 if command.command == 'note_on':
                     print("DRUMMO")
-                    dq1.put(1)
+                    key = command.params.key.__int__()
+                    velocity = command.params.velocity
+                    notetype = np.where(notes == key)[0]
+                    if len(notetype) > 0:
+                        dq1.put(notetype)
+                        #how do we output velocity too?
+                        #a second dq1 (dq11), or can I .put(notetype, velocity)
 
             if chn == 3:  # this means its channel 4 !!!!!
                 if command.command == 'note_on':

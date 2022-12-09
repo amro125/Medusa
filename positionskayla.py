@@ -79,6 +79,14 @@ def utrajmaker(IP):
     # print(traj)
     return traj
 
+def tensetrajmaker(IP):
+    pos = IP
+    j_angles = pos.copy()
+    traj = []
+    for i in range(len(pos)):
+        j_angles[0] = pos[0] - 22
+
+
 
 amp2 = 5
 IP0s = [-1-amp2/2, 87.1, -2, 126.5, 0, 51.7, -45]

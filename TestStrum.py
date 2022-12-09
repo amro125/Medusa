@@ -31,7 +31,7 @@ def setup():
         a.set_mode(0)
         a.set_state(0)
         angle = pos.copy()
-        angle[4] = 0.0
+        angle[0] = -0.98
         a.set_servo_angle(angle=angle, wait=False, speed=10, acceleration=0.25, is_radian=False)
 
 
@@ -54,17 +54,18 @@ def fifth_poly(q_i, q_f, t):
 
 if __name__ == '__main__':
     # global arm1
-    arm1 = XArmAPI('192.168.1.203')
+    arm1 = XArmAPI('192.168.1.237')
     global arms
     arms = [arm1]
-    strumD = 30
+    strumD = 10
     speed = 0.25
     global pos
-    pos = [-0.2, 83.8, 0, 120, -strumD/2, 50.75, -45]
+    #pos = [2.26, 86.0, 0, 127.1, -strumD/2, 50.1, -45]
     # pos = [2.5, 81, 0, 117.7, -strumD/2, 50.5, -45]
     # pos =[-4.9, 65, 3.5, 100.3, -strumD/2, 43.4, 92.3]
     # pos = [-4.9, 45, 3.5, 70.7, -strumD/2, 43.4, 92.3]
     # pos = [-4.9, 35, 3.5, 57.1, -strumD / 2, 43.4, 92.3]
+    pos = [-strumD/2, 35.32, 0, 45.6, -4.7, 34.5, -45]
     # totalArms = len(arms)
     # test = np.array([1, 2, 3])
     # print(len(np.where(test == 4)[0]))
