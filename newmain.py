@@ -315,19 +315,20 @@ def drummer(inq, num):
     i = 1
 
     # when num is 5 (snare)
+    if(num == 5):
 
         #get velocity as 1,2,3,4 to determine the next IP
 
         #if velocity is 1 (middle snare):
-    IPN = IP1
-# if velocity is 2 (pure rim):
-    IPN = IP2
-# if velocity is 3 (pure wood):
-    IPN = IP3
-# if velocity is 4 (rimshot):
-    IPN = IP4
-# if else, default to 1
-    IPN = IP1
+            IPN = IP1
+        # if velocity is 2 (pure rim):
+            IPN = IP2
+        # if velocity is 3 (pure wood):
+            IPN = IP3
+        # if velocity is 4 (rimshot):
+            IPN = IP4
+        # if else, default to 1
+            IPN = IP1
 
 
         # if note is 1 (normal strike)
@@ -554,8 +555,8 @@ if __name__ == '__main__':
     xArm2 = Thread(target=strummer, args=(q2, 2,)) #num 1
     xArm3 = Thread(target=strummer, args=(q3, 3,)) #num 3
     xArm4 = Thread(target=strummer, args=(q4, 4,)) #num 5
-    drumArm1 = Thread(target=drummer, args=(dq1, 5,))
-    drumArm2 = Thread(target=drummer, args=(dq2, 6,))
+    drumArm1 = Thread(target=drummer, args=(dq1, 5,)) #snare
+    drumArm2 = Thread(target=drummer, args=(dq2, 6,)) #bodhron
 
     xArm0.start()
     xArm1.start()
