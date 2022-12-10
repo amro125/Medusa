@@ -211,7 +211,7 @@ def drummer(inq,num):
     # trajz3 = spline_poly(325, 35, .08, .08, .15)
     # trajp3 = spline_poly(-89, -28, .08, .08, .15)
 
-    # traj2 = fifth_poly(IP[1], FP[1]e, 1.25, .25, .254)
+    # traj2 = fifth_poly(IP[1], FP[1], 1.25, .25, .254)
     # traj4 = fifth_poly(IP[3], FP[3], 1.25, .45, .054)
     # traj6 = fifth_poly(IP[5], FP[5], .75, 1, .004)
 

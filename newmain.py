@@ -254,11 +254,11 @@ def drumbot(traj1, traj2, traj3, traj4, traj5, traj6, traj7, arm):
     initial_time = time.time()
 
     # print(len(traj1))
-    # print(len(traj2))
+    print(len(traj2))
     # print(len(traj3))
-    # print(len(traj4))
+    print(len(traj4))
     # print(len(traj5))
-    # print(len(traj6))
+    print(len(traj6))
     # print(len(traj7))
 
     for i in range(min(len(traj2),len(traj4),len(traj6))):
@@ -312,7 +312,8 @@ def prepGesture(numarm, traj):
 def drummer(inq, num):
 
     global CP
-    #for some reason have to declare CP again lmao
+    global CPpass
+    #for some reason have to declare CP and CPpass again lmao
 
     while True:
         [pnote, pvel] = inq.get()
@@ -350,11 +351,11 @@ def drummer(inq, num):
             # if note is 3 (midi 60) (normal strike)
             if(pnote == 3):
                 traj1 = spline_poly(IP1[0], FP1[0], IPN[0], .2, .08, 0, .32)
-                traj2 = spline_poly(IP1[1], FP1[1], IPN[1], .4, .08, 0, 0)
+                traj2 = spline_poly(IP1[1], FP1[1], IPN[1], .5, .08, 0, 0)
                 traj3 = spline_poly(IP1[2], FP1[2], IPN[2], .2, .08, 0, .32)
-                traj4 = spline_poly(IP1[3], FP1[3], IPN[3], .32, .08, 0, 0.18)
+                traj4 = spline_poly(IP1[3], FP1[3], IPN[3], .32, .08, .13, 0)
                 traj5 = spline_poly(IP1[4], FP1[4], IPN[4], .2, .08, 0, 0.32)
-                traj6 = spline_poly(IP1[5], FP1[5], IPN[5], .2, .08, 0, 0.32)
+                traj6 = spline_poly(IP1[5], FP1[5], IPN[5], .2, .08, .35, 0)
                 traj7 = spline_poly(IP1[6], FP1[6], IPN[6], .2, .08, 0, 0.32)
 
                 if(IP1 == CP):
@@ -364,13 +365,13 @@ def drummer(inq, num):
             # if note is 4 (double strike)
             elif (pnote == 4):
                 # added .1 to all stopbots
-                traj1 = spline_poly(IP1[0], FP1[0], IPN[0], .2, .08, 0, .42)
-                traj2 = spline_poly(IP1[1], FP1[1], IPN[1], .4, .08, 0, .1)
-                traj3 = spline_poly(IP1[2], FP1[2], IPN[2], .2, .08, 0, .42)
-                traj4 = spline_poly(IP1[3], FP1[3], IPN[3], .32, .08, 0, 0.28)
-                traj5 = spline_poly(IP1[4], FP1[4], IPN[4], .2, .08, 0, 0.42)
-                traj6 = spline_poly(IP1[5], FP1[5], IPN[5], .2, .08, 0, 0.42)
-                traj7 = spline_poly(IP1[6], FP1[6], IPN[6], .2, .08, 0, 0.42)
+                traj1 = spline_poly(IP1[0], FP5[0], IPN[0], .2, .08, 0, .42)
+                traj2 = spline_poly(IP1[1], FP5[1], IPN[1], .5, .08, 0, 0.1)
+                traj3 = spline_poly(IP1[2], FP5[2], IPN[2], .2, .08, 0, .42)
+                traj4 = spline_poly(IP1[3], FP5[3], IPN[3], .32, .08, .13, 0.1)
+                traj5 = spline_poly(IP1[4], FP5[4], IPN[4], .2, .08, 0, 0.42)
+                traj6 = spline_poly(IP1[5], FP5[5], IPN[5], .2, .08, .35, 0.1)
+                traj7 = spline_poly(IP1[6], FP5[6], IPN[6], .2, .08, 0, 0.42)
 
                 if (IP1 == CP):
                     CPpass = 1
@@ -542,14 +543,14 @@ if __name__ == '__main__':
     #SIP are strings initial positions
     
 
-
+    #for the following IP's, make sure the FP is different in every element than the IP, even if its by .1
 
     
     #IPS for different drum strikes on snare
 
     #IP1 is middle snare
     IP1 = [0, 23.1, 0, 51.4, 0, -60.8, 0]
-    FP1 = [0.1, 30, 0.1, 60, 0.1, -12, 0.1]
+    FP1 = [0.1, 51, 0.1, 60, 0.1, -12, 0.1]
     #IP2 is pure rim
     IP2 = [0, 23.1, 0, 51.4, 0, -60.8, 0]
     FP2 = [0.1, 65, 0.1, 88.1, 0.1, -8, 0.1]
@@ -559,6 +560,9 @@ if __name__ == '__main__':
     # IP4 is rimshot (rim and skin)
     IP4 = [30.0, 67.2, 21.8, 109.1, 94.7, -94.9, -31.4]
     FP4 = [30.1, 75.8, 21.9, 90.4, 94.8, -80.1, -31.5]
+    # IP5 for doubles and triples
+    IP5 = [0, 23.1, 0, 51.4, 0, -60.8, 0]
+    FP5 = [0.1, 48, 0.1, 60, 0.1, -12, 0.1]
     #current position variables
     CP = [0.0, 23.1, 0.0, 51.4, 0.0, -60.8, 0.0]  # DRUMMMING
     CPpass = 0; #0 is no go, 1 is good to go
