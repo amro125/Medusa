@@ -268,7 +268,7 @@ def drumbot(traj1, traj2, traj3, traj4, traj5, traj6, traj7, arm):
         #j_angles[4] = traj[i]
         #arms[numarm].set_servo_angle_j(angles=j_angles, is_radian=False)
         jointangles = [traj1[i],traj2[i],traj3[i],traj4[i],traj5[i],traj6[i],traj7[i]]
-        print(traj2[i])
+        #print(traj2[i])
         #arms[arm].set_servo_angle_j(angles=jointangles, is_radian=False)
         while track_time < initial_time + 0.004:
             track_time = time.time()
@@ -311,6 +311,9 @@ def prepGesture(numarm, traj):
 
 def drummer(inq, num):
 
+    global CP
+    #for some reason have to declare CP again lmao
+
     while True:
         [pnote, pvel] = inq.get()
         #play note, play velocity
@@ -341,7 +344,10 @@ def drummer(inq, num):
 
             #if note is 0, 1, 2 (lighter strikes)
 
-            # if note is 3 (normal strike)
+
+            ###these are hits with veloctiy 1 representing the IP!###
+
+            # if note is 3 (midi 60) (normal strike)
             if(pnote == 3):
                 traj1 = spline_poly(IP1[0], FP1[0], IPN[0], .2, .08, 0, .32)
                 traj2 = spline_poly(IP1[1], FP1[1], IPN[1], .4, .08, 0, 0)
@@ -399,6 +405,8 @@ def drummer(inq, num):
                     CPpass = 1
                     CP = IPN
 
+            ###these are hits with veloctiy 3 representing the IP!###
+
             # if note is 7 (pure wood)
             elif (pnote == 7):
                 traj1 = spline_poly(IP3[0], FP3[0], IPN[0], .2, .08, 0, .32)
@@ -412,6 +420,8 @@ def drummer(inq, num):
                 if (IP3 == CP):
                     CPpass = 1
                     CP = IPN
+
+            ###these are hits with veloctiy 4 representing the IP!###
 
             # if note is 8 (rimshot rim + skin)
             elif (pnote == 5):
@@ -441,6 +451,7 @@ def drummer(inq, num):
             if (IP1 == CP):
                 CPpass = 1
                 CP = IPN
+
 
 
         #send trajectories to drumbot to perform (unless CP is not met)
@@ -531,10 +542,8 @@ if __name__ == '__main__':
     #SIP are strings initial positions
     
 
-    DRUM2 = [0.0, 23.1, 0.0, 51.4, 0.0, -60.8, 0.0] #DRUMMMING
-    notes = np.array([64, 60, 69, 55, 62])
-    #drumnote nparray
-    drumnotes = np.array([58, 59, 60, 61, 62, 63, 64, 65, 66, 67])
+
+
     
     #IPS for different drum strikes on snare
 
@@ -550,6 +559,10 @@ if __name__ == '__main__':
     # IP4 is rimshot (rim and skin)
     IP4 = [30.0, 67.2, 21.8, 109.1, 94.7, -94.9, -31.4]
     FP4 = [30.1, 75.8, 21.9, 90.4, 94.8, -80.1, -31.5]
+    #current position variables
+    CP = [0.0, 23.1, 0.0, 51.4, 0.0, -60.8, 0.0]  # DRUMMMING
+    CPpass = 0; #0 is no go, 1 is good to go
+
 
     SIP0 = [-0.25, 87.38, -2, 126.5, -strumD/2, 51.73, -45]
     SIP1 = [2.62, 86.2, 0, 127.1, -strumD/2, 50.13, -45]
@@ -558,14 +571,16 @@ if __name__ == '__main__':
     SIP4 = [-1.8, 81.8, 0, 120, -strumD/2, 50.65, -45]         # [-3.9, 65, 3.5, 100.3, -strumD/2, 42.7, 101.1]
     DRUM1 = [0.0, 23.1, 0.0, 51.4, 0.0, -60.8, 0.0] #DRUMMMING
     DRUM2 = [0.0, 23.1, 0.0, 51.4, 0.0, -60.8, 0.0] #DRUMMMING
-    CP = [0.0, 23.1, 0.0, 51.4, 0.0, -60.8, 0.0]  # DRUMMMING
-    CPpass = 0; #0 is no go, 1 is good to go
+
+    #notes for strings
     notes = np.array([64, 60, 69, 55, 62])
+    # drumnote nparray
+    drumnotes = np.array([58, 59, 60, 61, 62, 63, 64, 65, 66, 67])
 
 
 
 
-    IP = [SIP1, SIP2, SIP3, SIP4, DRUM1, DRUM2]
+    IP = [SIP0, SIP1, SIP2, SIP3, SIP4, DRUM1, DRUM2]
     global AllIP
 
     print(positions.IPu)
