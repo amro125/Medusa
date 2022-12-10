@@ -269,7 +269,7 @@ def drumbot(traj1, traj2, traj3, traj4, traj5, traj6, traj7, arm):
         #arms[numarm].set_servo_angle_j(angles=j_angles, is_radian=False)
         jointangles = [traj1[i],traj2[i],traj3[i],traj4[i],traj5[i],traj6[i],traj7[i]]
         print(traj2[i])
-        arms[arm].set_servo_angle_j(angles=jointangles, is_radian=False)
+        #arms[arm].set_servo_angle_j(angles=jointangles, is_radian=False)
         while track_time < initial_time + 0.004:
             track_time = time.time()
             time.sleep(0.0001)
@@ -310,99 +310,107 @@ def prepGesture(numarm, traj):
 
 
 def drummer(inq, num):
-    # test what num is, then set trajectory depending on num
-
-    i = 1
-
-    # when num is 5 (snare)
-    if(num == 5):
-
-        #get velocity as 1,2,3,4 to determine the next IP
-
-        #if velocity is 1 (middle snare):
-            IPN = IP1
-        # if velocity is 2 (pure rim):
-            IPN = IP2
-        # if velocity is 3 (pure wood):
-            IPN = IP3
-        # if velocity is 4 (rimshot):
-            IPN = IP4
-        # if else, default to 1
-            IPN = IP1
-
-
-        # if note is 1 (normal strike)
-        traj1 = spline_poly(IP1[0], FP1[0], IPN[0], .2, .08, 0, .32)
-        traj2 = spline_poly(IP1[1], FP1[1], IPN[1], .4, .08, 0, 0)
-        traj3 = spline_poly(IP1[2], FP1[2], IPN[2], .2, .08, 0, .32)
-        traj4 = spline_poly(IP1[3], FP1[3], IPN[3], .32, .08, 0, 0.18)
-        traj5 = spline_poly(IP1[4], FP1[4], IPN[4], .2, .08, 0, 0.32)
-        traj6 = spline_poly(IP1[5], FP1[5], IPN[5], .2, .08, 0, 0.32)
-        traj7 = spline_poly(IP1[6], FP1[6], IPN[6], .2, .08, 0, 0.32)
-
-        #if note is 2 (double strike)
-        #added .1 to all stopbots
-        traj1 = spline_poly(IP1[0], FP1[0], IPN[0], .2, .08, 0, .42)
-        traj2 = spline_poly(IP1[1], FP1[1], IPN[1], .4, .08, 0, .1)
-        traj3 = spline_poly(IP1[2], FP1[2], IPN[2], .2, .08, 0, .42)
-        traj4 = spline_poly(IP1[3], FP1[3], IPN[3], .32, .08, 0, 0.28)
-        traj5 = spline_poly(IP1[4], FP1[4], IPN[4], .2, .08, 0, 0.42)
-        traj6 = spline_poly(IP1[5], FP1[5], IPN[5], .2, .08, 0, 0.42)
-        traj7 = spline_poly(IP1[6], FP1[6], IPN[6], .2, .08, 0, 0.42)
-
-        #if note is 3 (triple strike)
-        #added .2 to all stopbots
-        traj1 = spline_poly(IP1[0], FP1[0], IPN[0], .2, .08, 0, .52)
-        traj2 = spline_poly(IP1[1], FP1[1], IPN[1], .4, .08, 0, .2)
-        traj3 = spline_poly(IP1[2], FP1[2], IPN[2], .2, .08, 0, .52)
-        traj4 = spline_poly(IP1[3], FP1[3], IPN[3], .32, .08, 0, 0.48)
-        traj5 = spline_poly(IP1[4], FP1[4], IPN[4], .2, .08, 0, 0.52)
-        traj6 = spline_poly(IP1[5], FP1[5], IPN[5], .2, .08, 0, 0.52)
-        traj7 = spline_poly(IP1[6], FP1[6], IPN[6], .2, .08, 0, 0.52)
-
-        #if note is 4 (pure rim)
-        traj1 = spline_poly(IP2[0], FP2[0], IPN[0], .2, .08, 0, .32)
-        traj2 = spline_poly(IP2[1], FP2[1], IPN[1], .4, .08, 0, 0)
-        traj3 = spline_poly(IP2[2], FP2[2], IPN[2], .2, .08, 0, .32)
-        traj4 = spline_poly(IP2[3], FP2[3], IPN[3], .32, .08, 0, 0.18)
-        traj5 = spline_poly(IP2[4], FP2[4], IPN[4], .2, .08, 0, 0.32)
-        traj6 = spline_poly(IP2[5], FP2[5], IPN[5], .2, .08, 0, 0.32)
-        traj7 = spline_poly(IP2[6], FP2[6], IPN[6], .2, .08, 0, 0.32)
-
-        #if note is 5 (pure wood)
-        traj1 = spline_poly(IP3[0], FP3[0], IPN[0], .2, .08, 0, .32)
-        traj2 = spline_poly(IP3[1], FP3[1], IPN[1], .4, .08, 0, 0)
-        traj3 = spline_poly(IP3[2], FP3[2], IPN[2], .2, .08, 0, .32)
-        traj4 = spline_poly(IP3[3], FP3[3], IPN[3], .32, .08, 0, 0.18)
-        traj5 = spline_poly(IP3[4], FP3[4], IPN[4], .2, .08, 0, 0.32)
-        traj6 = spline_poly(IP3[5], FP3[5], IPN[5], .2, .08, 0, 0.32)
-        traj7 = spline_poly(IP3[6], FP3[6], IPN[6], .2, .08, 0, 0.32)
-
-        #if note is 6 (rimshot rim + skin)
-        traj1 = spline_poly(IP4[0], FP4[0], IPN[0], .2, .08, 0, .32)
-        traj2 = spline_poly(IP4[1], FP4[1], IPN[1], .4, .08, 0, 0)
-        traj3 = spline_poly(IP4[2], FP4[2], IPN[2], .2, .08, 0, .32)
-        traj4 = spline_poly(IP4[3], FP4[3], IPN[3], .32, .08, 0, 0.18)
-        traj5 = spline_poly(IP4[4], FP4[4], IPN[4], .2, .08, 0, 0.32)
-        traj6 = spline_poly(IP4[5], FP4[5], IPN[5], .2, .08, 0, 0.32)
-        traj7 = spline_poly(IP4[6], FP4[6], IPN[6], .2, .08, 0, 0.32)
-
-    # when num is 6 (bodhron)
-        # if note is 1 (normal strike)
-        traj1 = spline_poly(IP1[0], FP1[0], IPN[0], .2, .08, 0, .32)
-        traj2 = spline_poly(IP1[1], FP1[1], IPN[1], .4, .08, 0, 0)
-        traj3 = spline_poly(IP1[2], FP1[2], IPN[2], .2, .08, 0, .32)
-        traj4 = spline_poly(IP1[3], FP1[3], IPN[3], .32, .08, 0, 0.18)
-        traj5 = spline_poly(IP1[4], FP1[4], IPN[4], .2, .08, 0, 0.32)
-        traj6 = spline_poly(IP1[5], FP1[5], IPN[5], .2, .08, 0, 0.32)
-        traj7 = spline_poly(IP1[6], FP1[6], IPN[6], .2, .08, 0, 0.32)
 
     while True:
-        play = inq.get()
+        [pnote, pvel] = inq.get()
+        #play note, play velocity
         print("got!")
 
-        #send trajectories to drumbot to perform
-        drumbot(traj1, traj2, traj3, traj4, traj5, traj6, traj7, num)
+
+        # test what num is, then set trajectory depending on num
+
+        # when num is 5 (snare)
+        if (num == 5):
+            # get velocity as 1,2,3,4 to determine the next IP
+
+            # if velocity is 1 (middle snare):
+            if(pvel == 1):
+                IPN = IP1
+            # if velocity is 2 (pure rim):
+            elif(pvel == 2):
+                IPN = IP2
+            # if velocity is 3 (pure wood):
+            elif(pvel == 3):
+                IPN = IP3
+            # if velocity is 4 (rimshot):
+            elif(pvel == 4):
+                IPN = IP4
+            # if else, default to 1
+            else:
+                IPN = IP1
+
+                # if note is 1 (normal strike)
+            if(pnote == 1):
+                traj1 = spline_poly(IP1[0], FP1[0], IPN[0], .2, .08, 0, .32)
+                traj2 = spline_poly(IP1[1], FP1[1], IPN[1], .4, .08, 0, 0)
+                traj3 = spline_poly(IP1[2], FP1[2], IPN[2], .2, .08, 0, .32)
+                traj4 = spline_poly(IP1[3], FP1[3], IPN[3], .32, .08, 0, 0.18)
+                traj5 = spline_poly(IP1[4], FP1[4], IPN[4], .2, .08, 0, 0.32)
+                traj6 = spline_poly(IP1[5], FP1[5], IPN[5], .2, .08, 0, 0.32)
+                traj7 = spline_poly(IP1[6], FP1[6], IPN[6], .2, .08, 0, 0.32)
+            elif(pnote == 2):
+            # if note is 2 (double strike)
+            # added .1 to all stopbots
+            traj1 = spline_poly(IP1[0], FP1[0], IPN[0], .2, .08, 0, .42)
+            traj2 = spline_poly(IP1[1], FP1[1], IPN[1], .4, .08, 0, .1)
+            traj3 = spline_poly(IP1[2], FP1[2], IPN[2], .2, .08, 0, .42)
+            traj4 = spline_poly(IP1[3], FP1[3], IPN[3], .32, .08, 0, 0.28)
+            traj5 = spline_poly(IP1[4], FP1[4], IPN[4], .2, .08, 0, 0.42)
+            traj6 = spline_poly(IP1[5], FP1[5], IPN[5], .2, .08, 0, 0.42)
+            traj7 = spline_poly(IP1[6], FP1[6], IPN[6], .2, .08, 0, 0.42)
+
+            # if note is 3 (triple strike)
+            # added .2 to all stopbots
+            traj1 = spline_poly(IP1[0], FP1[0], IPN[0], .2, .08, 0, .52)
+            traj2 = spline_poly(IP1[1], FP1[1], IPN[1], .4, .08, 0, .2)
+            traj3 = spline_poly(IP1[2], FP1[2], IPN[2], .2, .08, 0, .52)
+            traj4 = spline_poly(IP1[3], FP1[3], IPN[3], .32, .08, 0, 0.48)
+            traj5 = spline_poly(IP1[4], FP1[4], IPN[4], .2, .08, 0, 0.52)
+            traj6 = spline_poly(IP1[5], FP1[5], IPN[5], .2, .08, 0, 0.52)
+            traj7 = spline_poly(IP1[6], FP1[6], IPN[6], .2, .08, 0, 0.52)
+
+            # if note is 4 (pure rim)
+            traj1 = spline_poly(IP2[0], FP2[0], IPN[0], .2, .08, 0, .32)
+            traj2 = spline_poly(IP2[1], FP2[1], IPN[1], .4, .08, 0, 0)
+            traj3 = spline_poly(IP2[2], FP2[2], IPN[2], .2, .08, 0, .32)
+            traj4 = spline_poly(IP2[3], FP2[3], IPN[3], .32, .08, 0, 0.18)
+            traj5 = spline_poly(IP2[4], FP2[4], IPN[4], .2, .08, 0, 0.32)
+            traj6 = spline_poly(IP2[5], FP2[5], IPN[5], .2, .08, 0, 0.32)
+            traj7 = spline_poly(IP2[6], FP2[6], IPN[6], .2, .08, 0, 0.32)
+
+            # if note is 5 (pure wood)
+            traj1 = spline_poly(IP3[0], FP3[0], IPN[0], .2, .08, 0, .32)
+            traj2 = spline_poly(IP3[1], FP3[1], IPN[1], .4, .08, 0, 0)
+            traj3 = spline_poly(IP3[2], FP3[2], IPN[2], .2, .08, 0, .32)
+            traj4 = spline_poly(IP3[3], FP3[3], IPN[3], .32, .08, 0, 0.18)
+            traj5 = spline_poly(IP3[4], FP3[4], IPN[4], .2, .08, 0, 0.32)
+            traj6 = spline_poly(IP3[5], FP3[5], IPN[5], .2, .08, 0, 0.32)
+            traj7 = spline_poly(IP3[6], FP3[6], IPN[6], .2, .08, 0, 0.32)
+
+            # if note is 6 (rimshot rim + skin)
+            traj1 = spline_poly(IP4[0], FP4[0], IPN[0], .2, .08, 0, .32)
+            traj2 = spline_poly(IP4[1], FP4[1], IPN[1], .4, .08, 0, 0)
+            traj3 = spline_poly(IP4[2], FP4[2], IPN[2], .2, .08, 0, .32)
+            traj4 = spline_poly(IP4[3], FP4[3], IPN[3], .32, .08, 0, 0.18)
+            traj5 = spline_poly(IP4[4], FP4[4], IPN[4], .2, .08, 0, 0.32)
+            traj6 = spline_poly(IP4[5], FP4[5], IPN[5], .2, .08, 0, 0.32)
+            traj7 = spline_poly(IP4[6], FP4[6], IPN[6], .2, .08, 0, 0.32)
+
+            # when num is 6 (bodhron)
+            # if note is 1 (normal strike)
+            traj1 = spline_poly(IP1[0], FP1[0], IPN[0], .2, .08, 0, .32)
+            traj2 = spline_poly(IP1[1], FP1[1], IPN[1], .4, .08, 0, 0)
+            traj3 = spline_poly(IP1[2], FP1[2], IPN[2], .2, .08, 0, .32)
+            traj4 = spline_poly(IP1[3], FP1[3], IPN[3], .32, .08, 0, 0.18)
+            traj5 = spline_poly(IP1[4], FP1[4], IPN[4], .2, .08, 0, 0.32)
+            traj6 = spline_poly(IP1[5], FP1[5], IPN[5], .2, .08, 0, 0.32)
+            traj7 = spline_poly(IP1[6], FP1[6], IPN[6], .2, .08, 0, 0.32)
+
+
+
+
+            #send trajectories to drumbot to perform
+            drumbot(traj1, traj2, traj3, traj4, traj5, traj6, traj7, num)
 
 def strummer(inq,num):
     i = 0
