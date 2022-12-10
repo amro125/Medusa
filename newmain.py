@@ -269,7 +269,7 @@ def drumbot(traj1, traj2, traj3, traj4, traj5, traj6, traj7, arm):
         #arms[numarm].set_servo_angle_j(angles=j_angles, is_radian=False)
         jointangles = [traj1[i],traj2[i],traj3[i],traj4[i],traj5[i],traj6[i],traj7[i]]
         #print(traj2[i])
-        #arms[arm].set_servo_angle_j(angles=jointangles, is_radian=False)
+        arms[arm].set_servo_angle_j(angles=jointangles, is_radian=False)
         while track_time < initial_time + 0.004:
             track_time = time.time()
             time.sleep(0.0001)
