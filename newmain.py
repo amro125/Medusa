@@ -9,7 +9,7 @@ from pymidi import server
 from queue import Queue
 from threading import Thread
 from xarm.wrapper import XArmAPI
-from concert import poseToPose, robomove, gotoPose
+
 import positions
 
 
@@ -55,6 +55,7 @@ class MyHandler(server.Handler):
                     key = command.params.key.__int__()
                     velocity = command.params.velocity
                     rob = np.where(notes == key)[0]
+                    # print(rob)
                     if len(rob) > 0:
                         strumtype = chn - 12
                         print(int(rob))
@@ -87,10 +88,42 @@ def robomove(numarm, trajectory):
 
 
 
+def poseToPose(poseI, poseF, t):
+    traj = []
+    for p in range(len(poseI)):
+        traj.append(fifth_poly(poseI[p], poseF[p], t))
+        print(p)
+    return traj
+
+def gotoPose(numarm, traj):
+    track_time = time.time()
+    initial_time = time.time()
+    for ang in range(len(traj[0])):
+        angles = [traj[0][ang], traj[1][ang], traj[2][ang], traj[3][ang], traj[4][ang], traj[5][ang], traj[6][ang]]
+        start_time = time.time()
+        arms[numarm].set_servo_angle_j(angles=angles, is_radian=False)
+        # print(angles)
+        while track_time < initial_time + 0.004:
+            track_time = time.time()
+            time.sleep(0.001)
+        initial_time += 0.004
+def robomove(numarm, trajectory):
+    track_time = time.time()
+    initial_time = time.time()
+    for j_angles in trajectory:
+        # run command
+        start_time = time.time()
+        # print(j_angles)
+        arms[numarm].set_servo_angle_j(angles=j_angles, is_radian=False)
+        while track_time < initial_time + 0.004:
+            track_time = time.time()
+            time.sleep(0.0001)
+        initial_time += 0.004
+
 def setup():
     for a in range(len(arms)):
         arms[a].set_simulation_robot(on_off=False)
-        arms[a].motion_enable(enable=True)
+        # arms[a].motion_enable(enable=True)
         arms[a].clean_warn()
         arms[a].clean_error()
         arms[a].set_mode(0)
