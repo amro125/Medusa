@@ -275,16 +275,16 @@ def drummer(inq,num):
 
     #single hit
     #change the 18
-    trajz = spline_poly(325, 18, .10, .04, 0.01)
+    trajz = spline_poly(325, 22, .10, .04, 0.01)
     trajp = spline_poly(-89, -30, .10, .04, 0.01)
 
 
     #double hit
-    trajz2 = spline_poly(325, 18, .10, .04, 0.1)
+    trajz2 = spline_poly(325, 22, .10, .04, 0.1)
     trajp2 = spline_poly(-89, -30, .10, .04, 0.1)
 
     #triple hit
-    trajz3 = spline_poly(325, 18, .10, .04, 0.15)
+    trajz3 = spline_poly(325, 22, .10, .04, 0.15)
     trajp3 = spline_poly(-89, -30, .10, .04, 0.15)
 
     # bodharn drum chime
