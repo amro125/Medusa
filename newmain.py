@@ -43,7 +43,11 @@ class MyHandler(server.Handler):
             if chn == 3:  # this means its channel 4 !!!!!
                 if command.command == 'note_on':
                     print("DRUMMO2")
-                    dq2.put(1)
+                    key2 = command.params.key.__int__()
+                    velocity2 = command.params.velocity
+                    notetype2 = np.where(drumnotes == key2)[0]
+                    if len(notetype2) > 0:
+                        dq2.put([notetype2, velocity2])
 
             if chn > 12 and chn < 16:  # MIDI CHANNEL IN LOGIC IS 1 HIGHER THAN THIS NUMBER!!!!!
                 if command.command == 'note_on':
@@ -486,20 +490,51 @@ def drummer(inq, num):
 
         # when num is 6 (bodhron)
         elif (num == 6):
-            # if note is 1 (normal strike)
-            traj1 = spline_poly(IP1[0], FP1[0], IPN[0], .2, .08, 0, .32)
-            traj2 = spline_poly(IP1[1], FP1[1], IPN[1], .4, .08, 0, 0)
-            traj3 = spline_poly(IP1[2], FP1[2], IPN[2], .2, .08, 0, .32)
-            traj4 = spline_poly(IP1[3], FP1[3], IPN[3], .32, .08, 0, 0.18)
-            traj5 = spline_poly(IP1[4], FP1[4], IPN[4], .2, .08, 0, 0.32)
-            traj6 = spline_poly(IP1[5], FP1[5], IPN[5], .2, .08, 0, 0.32)
-            traj7 = spline_poly(IP1[6], FP1[6], IPN[6], .2, .08, 0, 0.32)
+            #only one IP
+            CPpass = 1
+            # if note is 3 (midi 60) (normal strike)
+            if (pnote == 3):
+                traj1 = spline_poly(BIP1[0], BFP1[0], BIP1[0], .2, .08, 0, .7)
+                traj2 = spline_poly(BIP1[1], BFP1[1], BIP1[1], .4, .08, 0.1, 0)
+                traj3 = spline_poly(BIP1[2], BFP1[2], BIP1[2], .2, .08, 0, .7)
+                traj4 = spline_poly(BIP1[3], BFP1[3], BIP1[3], .32, .08, .23, 0)
+                traj5 = spline_poly(BIP1[4], BFP1[4], BIP1[4], .2, .08, 0, 0.7)
+                traj6 = spline_poly(BIP1[5], BFP1[5], BIP1[5], .18, .08, .45, 0)
+                traj7 = spline_poly(BIP1[6], BFP1[6], BIP1[6], .2, .08, 0, 0.7)
 
-            if (IP1 == CP):
-                CPpass = 1
-                CP = IPN
+            # if note is 4 (double strike)
+            elif (pnote == 4):
+                # added .1 to all stopbots
+                CPpass = 0
+                traj1 = spline_poly(BIP1[0], BFP1[0], BIP1[0], .2, .08, 0, .8)
+                traj2 = spline_poly(BIP1[1], BFP1[1], BIP1[1], .5, .08, 0, 0.02)
+                traj3 = spline_poly(BIP1[2], BFP1[2], BIP1[2], .2, .08, 0, .8)
+                traj4 = spline_poly(BIP1[3], BFP1[3], BIP1[3], .32, .08, .13, 0.156)
+                traj5 = spline_poly(BIP1[4], BFP1[4], BIP1[4], .2, .08, 0, 0.8)
+                traj6 = spline_poly(BIP1[5], BFP1[5], BIP1[5], .2, .08, .35, 0.116)
+                traj7 = spline_poly(BIP1[6], BFP1[6], BIP1[6], .2, .08, 0, 0.8)
 
+            # if note is 5 (triple strike)
+            elif (pnote == 5):
+                CPpass = 0
+                # added .2 to all stopbots
+                traj1 = spline_poly(BIP1[0], BFP1[0], BIP1[0], .2, .08, 0, .8)
+                traj2 = spline_poly(BIP1[1], BFP1[1], BIP1[1], .5, .08, 0, 0.08)
+                traj3 = spline_poly(BIP1[2], BFP1[2], BIP1[2], .2, .08, 0, .8)
+                traj4 = spline_poly(BIP1[3], BFP1[3], BIP1[3], .32, .08, .13, 0.216)
+                traj5 = spline_poly(BIP1[4], BFP1[4], BIP1[4], .2, .08, 0, 0.8)
+                traj6 = spline_poly(BIP1[5], BFP1[5], BIP1[5], .2, .08, .35, 0.176)
+                traj7 = spline_poly(BIP1[6], BFP1[6], BIP1[6], .2, .08, 0, 0.8)
 
+            #outside rim of bodhron
+            elif (pnote == 6):
+                traj1 = spline_poly(BIP1[0], BFP2[0], BIP1[0], .2, .08, 0.05, .32)
+                traj2 = spline_poly(BIP1[1], BFP2[1], BIP1[1], .4, .08, 0.05, 0)
+                traj3 = spline_poly(BIP1[2], BFP2[2], BIP1[2], .2, .08, 0.05, .32)
+                traj4 = spline_poly(BIP1[3], BFP2[3], BIP1[3], .32, .08, 0.15, 0.08)
+                traj5 = spline_poly(BIP1[4], BFP2[4], BIP1[4], .2, .08, 0.05, 0.32)
+                traj6 = spline_poly(BIP1[5], BFP2[5], BIP1[5], .2, .08, 0.35, 0.02)
+                traj7 = spline_poly(BIP1[6], BFP2[6], BIP1[6], .2, .08, 0.05, 0.32)
 
         #send trajectories to drumbot to perform (unless CP is not met)
         if(CPpass == 1):
@@ -579,6 +614,9 @@ if __name__ == '__main__':
     global FP3
     global IP4
     global FP4
+    global BIP1
+    global BFP1
+    global BFP2
     #CP is current position, pass is check to see if continuity is met
     global CP
     global CPpass
@@ -619,6 +657,14 @@ if __name__ == '__main__':
     #current position variables
     CP = [0.0, 23.1, 0.0, 51.4, 0.0, -60.8, 0.0]  # DRUMMMING
     CPpass = 0; #0 is no go, 1 is good to go
+
+
+    #IPS for strikes on Bodhron
+
+    BIP1 = [0, 23.1, 0, 51.4, 0, -60.8, 0]
+    BFP1 = [0.1, 53, 0.1, 60, 0.1, -12, 0.1]
+    BFP2 = [0.1, 70, 0.1, 88.1, 0.1, -8, 0.1]
+
 
 
     SIP0 = [-0.25, 87.38, -2, 126.5, -strumD/2, 51.73, -45]
