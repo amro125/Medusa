@@ -60,6 +60,20 @@ class MyHandler(server.Handler):
                         strumtype = chn - 12
                         print(int(rob))
                         qList[int(rob)].put(strumtype)
+            if chn == 10: # this means its channel 11!!!!
+                if command.command == 'note_on':
+                    print(chn)
+                    key = command.params.key.__int__()
+                    velocity = command.params.velocity
+                    rob = np.where(notes == key)[0]
+                    # print(rob)
+                    if len(rob) > 0:
+                        strumtype = velocity+5
+                        print("mode to ", velocity)
+                        print(int(rob))
+                        qList[int(rob)].put(strumtype)
+
+
             if chn == 11:  # this means its channel 12!!!!!
                 if command.command == 'note_on':
                     # print(chn)
@@ -595,9 +609,12 @@ def strummer(inq,num):
 
     while True:
         play = inq.get() #WHERE I AM GETTING A PLAY A NOT COMMAND
-        newmode = play
+        newmode = int(play)
         if newmode != strumMode:
             i = 0
+            if newmode > 5:
+                print("switching to", newmode)
+                newmode = newmode - 5
             poseI = arms[num].angles
             poseF = AllIP[newmode-1][num]
             setup = poseToPose(poseI, poseF, 1)
