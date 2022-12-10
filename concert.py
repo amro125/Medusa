@@ -68,7 +68,25 @@ class MyHandler(server.Handler):
 
                     #playDance(dances[velocity])
 
+def poseToPose(poseI, poseF, t):
+    traj = []
+    for p in range(len(poseI)):
+        traj.append(fifth_poly(poseI[p], poseF[p], t))
+        print(p)
+    return traj
 
+def gotoPose(numarm, traj):
+    track_time = time.time()
+    initial_time = time.time()
+    for ang in range(len(traj[0])):
+        angles = [traj[0][ang], traj[1][ang], traj[2][ang], traj[3][ang], traj[4][ang], traj[5][ang], traj[6][ang]]
+        start_time = time.time()
+        arms[numarm].set_servo_angle_j(angles=angles, is_radian=False)
+        # print(angles)
+        while track_time < initial_time + 0.004:
+            track_time = time.time()
+            time.sleep(0.001)
+        initial_time += 0.004
 def robomove(numarm, trajectory):
     track_time = time.time()
     initial_time = time.time()
@@ -113,25 +131,7 @@ def drummer(inq,num):
         #if i == 1:
 
 
-def poseToPose(poseI, poseF, t):
-    traj = []
-    for p in range(len(poseI)):
-        traj.append(fifth_poly(poseI[p], poseF[p], t))
-        print(p)
-    return traj
 
-def gotoPose(numarm, traj):
-    track_time = time.time()
-    initial_time = time.time()
-    for ang in range(len(traj[0])):
-        angles = [traj[0][ang], traj[1][ang], traj[2][ang], traj[3][ang], traj[4][ang], traj[5][ang], traj[6][ang]]
-        start_time = time.time()
-        arms[numarm].set_servo_angle_j(angles=angles, is_radian=False)
-        # print(angles)
-        while track_time < initial_time + 0.004:
-            track_time = time.time()
-            time.sleep(0.001)
-        initial_time += 0.004
 
 def setup():
     for a in range(len(arms)):
@@ -357,19 +357,16 @@ if __name__ == '__main__':
 
     strumD = 30
     speed = 0.25
-    IP0 = [-1, 87.1, -2, 126.5, -strumD/2, 51.7, -45]
-    IP1 = [2.26, 86.0, 0, 127.1, -strumD/2, 50.1, -45]
-    IP2 = [1.5, 81.6, 0.0, 120, -strumD/2, 54.2, -45]
-    IP3 = [-0.2, 83.8, 0, 120, -strumD/2, 50.75, -45]
-    IP4 = [-1.6, 81.8, 0, 120, -strumD/2, 50.75, -45]         # [-3.9, 65, 3.5, 100.3, -strumD/2, 42.7, 101.1]
-    DRUM1 = [0.0, 23.1, 0.0, 51.4, 0.0, -60.8, 0.0] #DRUMMMING
-    DRUM2 = [0.0, 23.1, 0.0, 51.4, 0.0, -60.8, 0.0] #DRUMMMING
+    SIP0 = [-0.25, 87.38, -2, 126.5, -strumD / 2, 51.75, -45]
+    SIP1 = [2.62, 86.2, 0, 127.1, -strumD / 2, 50.15, -45]
+    SIP2 = [1.3, 81.68, 0.0, 120, -strumD / 2, 54.2, -45]
+    SIP3 = [-1.4, 83.8, 0, 120, -strumD / 2, 50.75, -45]
+    SIP4 = [-1.8, 81.8, 0, 120, -strumD / 2, 50.65, -45]  # [-3.9, 65, 3.5, 100.3, -strumD/2, 42.7, 101.1]
+    DRUM1 = [0.0, 23.1, 0.0, 51.4, 0.0, -60.8, 0.0]  # DRUMMMING
+    DRUM2 = [0.0, 23.1, 0.0, 51.4, 0.0, -60.8, 0.0]  # DRUMMMING
     notes = np.array([64, 60, 69, 55, 62])
 
-
-
-
-    IP = [IP0, IP1, IP2, IP3, IP4, DRUM1, DRUM2]
+    IP = [SIP0, SIP1, SIP2, SIP3, SIP4, DRUM1, DRUM2]
     global AllIP
 
     print(positions.IPu)
@@ -426,15 +423,15 @@ if __name__ == '__main__':
     # q1.put(2)
     # input()
 
-    rtp_midi = RtpMidi(ROBOT, MyHandler(), PORT)
-    print("test")
-    rtp_midi.run()
+    # rtp_midi = RtpMidi(ROBOT, MyHandler(), PORT)
+    # print("test")
+    # rtp_midi.run()
 
     #w/out rtp midi
     while True:
-        mode = int(input("play mode \n"))
+        robot, mode = input("play mode \n").split()
         # time.sleep(5)
-        # q3.put(mode)
-        # time.sleep(20)
+        qList[int(robot)].put(int(mode))
+        time.sleep(4)
         # dq1.put(1)
         # time.sleep(1.0)

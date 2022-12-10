@@ -99,10 +99,10 @@ def livetraj(inq, robot):
             mvpose = [425 + xwave, 17.6 + ywave, 102 + zwave, -111.2, 0, -90.2]
 
 
-            if test:
-                print(arms[robot].get_servo_angle())
-                print(mvpose)
-                test = False
+            # if test:
+            #     print(arms[robot].get_servo_angle())
+            #     print(mvpose)
+            #     test = False
 
 
             arms[robot].set_servo_cartesian(mvpose, speed=100, mvacc=2000)

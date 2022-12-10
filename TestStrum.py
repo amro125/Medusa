@@ -31,7 +31,7 @@ def setup():
         a.set_mode(0)
         a.set_state(0)
         angle = pos.copy()
-        angle[0] = -0.98
+        angle[4] = 0
         a.set_servo_angle(angle=angle, wait=False, speed=10, acceleration=0.25, is_radian=False)
 
 
@@ -57,21 +57,22 @@ if __name__ == '__main__':
     arm1 = XArmAPI('192.168.1.237')
     global arms
     arms = [arm1]
-    strumD = 10
+    strumD = 30
     speed = 0.25
     global pos
-    #pos = [2.26, 86.0, 0, 127.1, -strumD/2, 50.1, -45]
-    # pos = [2.5, 81, 0, 117.7, -strumD/2, 50.5, -45]
-    # pos =[-4.9, 65, 3.5, 100.3, -strumD/2, 43.4, 92.3]
-    # pos = [-4.9, 45, 3.5, 70.7, -strumD/2, 43.4, 92.3]
-    # pos = [-4.9, 35, 3.5, 57.1, -strumD / 2, 43.4, 92.3]
-    pos = [-strumD/2, 35.32, 0, 45.6, -4.7, 34.5, -45]
+    IP0 = [-.25, 87.4, -2, 126.5, -strumD / 2, 51.7, -45]
+    IP1 = [2.67 , 86.1, 0, 127.1, -strumD / 2, 50.1, -45]
+    IP2 = [1.3, 81.68, 0.0, 120, -strumD / 2, 54.2, -45]
+    IP3 = [-1.4, 81, 0, 117.7, -strumD / 2, 50.5, -45]
+    pos = [-1.8 , 81.8, 0, 120, -strumD / 2, 50.65, -45]
+
+
     # totalArms = len(arms)
+
     # test = np.array([1, 2, 3])
     # print(len(np.where(test == 4)[0]))
     setup()
-    print(pos)
-    print(arm1.get_position())
+    # print(pos)
     input("test strumming")
     arm1.set_mode(0)
     arm1.set_state(0)

@@ -9,7 +9,7 @@ from pymidi import server
 from queue import Queue
 from threading import Thread
 from xarm.wrapper import XArmAPI
-
+from concert import poseToPose, robomove, gotoPose
 import positions
 
 
@@ -36,34 +36,32 @@ class MyHandler(server.Handler):
                     print("DRUMMO")
                     key = command.params.key.__int__()
                     velocity = command.params.velocity
-                    notetype = np.where(notes == key)[0]
+                    notetype = np.where(drumnotes == key)[0]
                     if len(notetype) > 0:
-                        dq1.put(notetype)
-                        #how do we output velocity too?
-                        #a second dq1 (dq11), or can I .put(notetype, velocity)
+                        dq1.put([notetype, velocity])
 
             if chn == 3:  # this means its channel 4 !!!!!
                 if command.command == 'note_on':
                     print("DRUMMO2")
                     dq2.put(1)
 
-
-            if chn == 13:  # this means its channel 14!!!!!
+            if chn > 12 and chn < 16:  # MIDI CHANNEL IN LOGIC IS 1 HIGHER THAN THIS NUMBER!!!!!
                 if command.command == 'note_on':
                     print(chn)
                     key = command.params.key.__int__()
                     velocity = command.params.velocity
                     rob = np.where(notes == key)[0]
                     if len(rob) > 0:
+                        strumtype = chn - 12
                         print(int(rob))
-                        qList[int(rob)].put(1)
-            if chn == 12:  # this means its channel 13!!!!!
+                        qList[int(rob)].put(strumtype)
+            if chn == 11:  # this means its channel 12!!!!!
                 if command.command == 'note_on':
                     # print(chn)
                     key = command.params.key.__int__()
                     velocity = command.params.velocity
                     for q in qList:
-                        q.put(2)
+                        q.put(5)
                     # print('key {} with velocity {}'.format(key, velocity))
                     # q.put(velocity)
 
@@ -318,18 +316,18 @@ def drummer(inq, num):
 
     # when num is 5 (snare)
 
-        #get velocity of C1 as 1,2,3,4 to determine the next IP
+        #get velocity as 1,2,3,4 to determine the next IP
 
-        #if velocity of C1 is 1 (middle snare):
-            IPN = IP1
-        # if velocity of C1 is 2 (pure rim):
-            IPN = IP2
-        # if velocity of C1 is 3 (pure wood):
-            IPN = IP3
-        # if velocity of C1 is 4 (rimshot):
-            IPN = IP4
-        # if else, default to 1
-            IPN = IP1
+        #if velocity is 1 (middle snare):
+    IPN = IP1
+# if velocity is 2 (pure rim):
+    IPN = IP2
+# if velocity is 3 (pure wood):
+    IPN = IP3
+# if velocity is 4 (rimshot):
+    IPN = IP4
+# if else, default to 1
+    IPN = IP1
 
 
         # if note is 1 (normal strike)
@@ -398,32 +396,60 @@ def drummer(inq, num):
         traj6 = spline_poly(IP1[5], FP1[5], IPN[5], .2, .08, 0, 0.32)
         traj7 = spline_poly(IP1[6], FP1[6], IPN[6], .2, .08, 0, 0.32)
 
-while True:
-    play = inq.get()
-    print("got!")
+    while True:
+        play = inq.get()
+        print("got!")
 
-    #send trajectories to drumbot to perform
-    drumbot(traj1, traj2, traj3, traj4, traj5, traj6, traj7, num)
+        #send trajectories to drumbot to perform
+        drumbot(traj1, traj2, traj3, traj4, traj5, traj6, traj7, num)
 
 def strummer(inq,num):
     i = 0
     uptraj = fifth_poly(-strumD/2, strumD/2, speed)
     downtraj = fifth_poly(strumD/2, -strumD/2, speed)
-    both = [uptraj, downtraj]
+    bothnorm = [uptraj, downtraj]
+
+    utrajfirst = positions.utraj[num]
+
+    utrajsecond = utrajfirst[::-1]
+    bothu = [utrajfirst, utrajsecond]
     tension = fifth_poly(0, -20, 0.5)
     release = fifth_poly(-20, 0, 0.75)
+    strumMode = 1
+    wave = positions.sintraj[num]
+    circ = positions.circletraj[num]
+
+
     while True:
         play = inq.get() #WHERE I AM GETTING A PLAY A NOT COMMAND
+        newmode = play
+        if newmode != strumMode:
+            i = 0
+            poseI = arms[num].angles
+            poseF = AllIP[newmode-1][num]
+            setup = poseToPose(poseI, poseF, 1)
+            gotoPose(num, setup)
+            strumMode = newmode
 
-        print("got!")
-        if play == 1:
+            # posetoPose(,)
+        # print("got!")
+
+        if play == 1: # this is normal playing
             direction = i % 2
             time.sleep(delayarray[direction, num]) #time delay before playing
             print(num)
             print(delayarray[0, num])
-            strumbot(num, both[direction])
+            strumbot(num, bothnorm[direction])
             i += 1
-        elif play == 2:
+        elif play == 2: # u traj strum
+            direction = i % 2
+            robomove(num, bothu[direction])
+            i += 1
+        elif play == 3: #Wavey strum
+            robomove(num, wave)
+        elif play == 4: # circle
+            robomove(num, circ)
+        elif play == 5:
             prepGesture(num, tension)
             time.sleep(0.25)
             prepGesture(num, release)
@@ -453,15 +479,11 @@ if __name__ == '__main__':
     speed = 0.25
     #SIP are strings initial positions
     
-    SIP0 = [-1, 87.1, -2, 126.5, -strumD/2, 51.7, -45]
-    SIP1 = [2.1, 86.3, 0, 127.1, -strumD/2, 50.1, -45]
-    SIP2 = [1.5, 81.6, 0.0, 120, -strumD/2, 54.2, -45]
-    SIP3 = [2.5, 81, 0, 117.7, -strumD/2, 50.5, -45]
-    SIP4 = [-1.6, 81.8, 0, 120, -strumD/2, 50.65, -45]         # [-3.9, 65, 3.5, 100.3, -strumD/2, 42.7, 101.1]
-    DRUM1 = [0.0, 23.1, 0.0, 51.4, 0.0, -60.8, 0.0] #DRUMMMING
+
     DRUM2 = [0.0, 23.1, 0.0, 51.4, 0.0, -60.8, 0.0] #DRUMMMING
     notes = np.array([64, 60, 69, 55, 62])
     #drumnote nparray
+    drumnotes = np.array([58, 59, 60, 61, 62, 63, 64, 65, 66, 67])
     
     #IPS for different drum strikes on snare
 
@@ -478,9 +500,25 @@ if __name__ == '__main__':
     IP4 = [30.0, 67.2, 21.8, 109.1, 94.7, -94.9, -31.4]
     FP4 = [30.1, 75.8, 21.9, 90.4, 94.8, -80.1, -31.5]
 
+    SIP0 = [-0.25, 87.38, -2, 126.5, -strumD/2, 51.73, -45]
+    SIP1 = [2.62, 86.2, 0, 127.1, -strumD/2, 50.13, -45]
+    SIP2 = [1.3, 81.68, 0.0, 120, -strumD/2, 54.2, -45]
+    SIP3 = [-1.4, 83.8, 0, 120, -strumD/2, 50.75, -45]
+    SIP4 = [-1.8, 81.8, 0, 120, -strumD/2, 50.65, -45]         # [-3.9, 65, 3.5, 100.3, -strumD/2, 42.7, 101.1]
+    DRUM1 = [0.0, 23.1, 0.0, 51.4, 0.0, -60.8, 0.0] #DRUMMMING
+    DRUM2 = [0.0, 23.1, 0.0, 51.4, 0.0, -60.8, 0.0] #DRUMMMING
+    notes = np.array([64, 60, 69, 55, 62])
+
+
 
 
     IP = [SIP1, SIP2, SIP3, SIP4, DRUM1, DRUM2]
+    global AllIP
+
+    print(positions.IPu)
+    AllIP = [IP, positions.IPu, positions.IPs, positions.IPc]
+
+
     arm0 = XArmAPI('192.168.1.208')
     arm1 = XArmAPI('192.168.1.226')
     arm2 = XArmAPI('192.168.1.244')
