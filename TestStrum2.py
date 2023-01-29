@@ -52,6 +52,26 @@ def fifth_poly(q_i, q_f, t):
     return traj_pos
 
 
+def poseToPose(poseI, poseF, t):
+    traj = []
+    for p in range(len(poseI)):
+        traj.append(fifth_poly(poseI[p], poseF[p], t))
+        # print(p)
+    return traj
+
+def gotoPose(numarm, traj):
+    track_time = time.time()
+    initial_time = time.time()
+    for ang in range(len(traj[0])):
+        angles = [traj[0][ang], traj[1][ang], traj[2][ang], traj[3][ang], traj[4][ang], traj[5][ang], traj[6][ang]]
+        start_time = time.time()
+        arms[numarm].set_servo_angle_j(angles=angles, is_radian=False)
+        # print(angles)
+        while track_time < initial_time + 0.004:
+            track_time = time.time()
+            time.sleep(0.001)
+        initial_time += 0.004
+
 if __name__ == '__main__':
     # global arm1
     arm1 = XArmAPI('192.168.1.203')
@@ -64,8 +84,9 @@ if __name__ == '__main__':
     IP1 = [2.67 , 86.1, 0, 127.1, -strumD / 2, 50.1, -45]
     IP2 = [1.3, 81.68, 0.0, 120, -strumD / 2, 54.2, -45]
     IP3 = [-1.4, 81, 0, 117.7, -strumD / 2, 50.5, -45]
-
+    
     pos = [-29.5, 85.6, 32.5, 109.2, -strumD / 2, 49.3, -45]
+    midpos = [1]
     pos2 = [39.5, 84.5, -40, 96.6,-strumD / 2, 49.3, -31.2]
 
 
@@ -87,6 +108,8 @@ if __name__ == '__main__':
     uptraj = fifth_poly(-strumD/2, strumD/2, speed)
     downtraj = fifth_poly(strumD/2, -strumD/2, speed)
     both = [uptraj, downtraj]
+    trajA = poseToPose(pos,pos2,0.5)
+
     while True:
         # input()
         print("got!")

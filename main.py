@@ -359,10 +359,10 @@ if __name__ == '__main__':
     print("test")
     rtp_midi.run()
 
-    #w/out rtp midi
-    while True:
-        dq1.put(1)
-        time.sleep(1.0)
+    # #w/out rtp midi
+    # while True:
+    #     dq1.put(1)
+    #     time.sleep(1.0)
 
 
 

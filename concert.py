@@ -45,17 +45,17 @@ class MyHandler(server.Handler):
                     dq2.put(1)
 
 
-            if chn > 12 and chn < 16:  #MIDI CHANNEL IN LOGIC IS 1 HIGHER THAN THIS NUMBER!!!!!
+            if chn > 8 and chn < 16:  #MIDI CHANNEL IN LOGIC IS 1 HIGHER THAN THIS NUMBER!!!!!
                 if command.command == 'note_on':
                     print(chn)
                     key = command.params.key.__int__()
                     velocity = command.params.velocity
                     rob = np.where(notes == key)[0]
                     if len(rob) > 0:
-                        strumtype = chn - 12
+                        strumtype = chn - 8
                         print(int(rob))
                         qList[int(rob)].put(strumtype)
-            if chn == 11:  # this means its channel 13!!!!!
+            if chn == 4:  # this means its channel 13!!!!!
                 if command.command == 'note_on':
                     # print(chn)
                     key = command.params.key.__int__()
@@ -136,7 +136,7 @@ def drummer(inq,num):
 def setup():
     for a in range(len(arms)):
         arms[a].set_simulation_robot(on_off=False)
-        # arms[a].motion_enable(enable=True)
+        arms[a].motion_enable(enable=True)
         arms[a].clean_warn()
         arms[a].clean_error()
         arms[a].set_mode(0)
@@ -276,7 +276,7 @@ def strumbot(numarm, traj):
 
 
 def prepGesture(numarm, traj):
-    pos = IP[numarm]
+    pos = arms[numarm].angles
     j_angles = pos.copy()
     track_time = time.time()
     initial_time = time.time()

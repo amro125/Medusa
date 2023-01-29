@@ -137,7 +137,7 @@ def robomove(numarm, trajectory):
 def setup():
     for a in range(len(arms)):
         arms[a].set_simulation_robot(on_off=False)
-        # arms[a].motion_enable(enable=True)
+        arms[a].motion_enable(enable=True)
         arms[a].clean_warn()
         arms[a].clean_error()
         arms[a].set_mode(0)
