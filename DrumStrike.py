@@ -26,12 +26,13 @@ def setup():
 
         arms[a].set_servo_angle(angle=[0, 23.1, 0, 51.4, 0, -60.8, 0], wait=False, speed=10, acceleration=0.25, is_radian=False)
 
-def spline_poly(q_i, q_f, q_in, ta, tt, ttopstop, tbotstop):
+def spline_poly(q_i, q_f, q_in, ta, tt, ttopstop, tbotstop, pba):
+    # qi is initial pos, qf is final pos (strike), qin is new initial (return pos)
 
-    #qi is initial pos, qf is final pos (strike), qin is new initial (return pos)
+    # initial accel (using first half of a 5th order poly)
+    # ta is double the time till max acceleration (time doing 5th order poly)
 
-    #initial accel (using first half of a 5th order poly)
-    #ta is double the time till max acceleration (time doing 5th order poly)
+    # pba is pullback amount
 
     ########### this code calculates the trajectory for the first half (the way down) #############
 
@@ -40,19 +41,21 @@ def spline_poly(q_i, q_f, q_in, ta, tt, ttopstop, tbotstop):
     dq_f = 0
     ddq_i = 0
     ddq_f = 0
-    a0 = q_i
+    a0 = (q_i - pba)
     a1 = dq_i
     a2 = 0.5 * ddq_i
-    a3 = 1 / (2 * ta ** 3) * (20 * (q_f - q_i)/2 - (8 * dq_f + 12 * dq_i) * ta - (3 * ddq_f - ddq_i) * ta ** 2)
-    a4 = 1 / (2 * ta ** 4) * (30 * (q_i - q_f)/2 + (14 * dq_f + 16 * dq_i) * ta + (3 * ddq_f - 2 * ddq_i) * ta ** 2)
-    a5 = 1 / (2 * ta ** 5) * (12 * (q_f - q_i)/2 - (6 * dq_f + 6 * dq_i) * ta - (ddq_f - ddq_i) * ta ** 2)
+    a3 = 1 / (2 * ta ** 3) * (
+                20 * (q_f - (q_i - pba)) / 2 - (8 * dq_f + 12 * dq_i) * ta - (3 * ddq_f - ddq_i) * ta ** 2)
+    a4 = 1 / (2 * ta ** 4) * (
+                30 * ((q_i - pba) - q_f) / 2 + (14 * dq_f + 16 * dq_i) * ta + (3 * ddq_f - 2 * ddq_i) * ta ** 2)
+    a5 = 1 / (2 * ta ** 5) * (12 * (q_f - (q_i - pba)) / 2 - (6 * dq_f + 6 * dq_i) * ta - (ddq_f - ddq_i) * ta ** 2)
     fifth_pos = a0 + a1 * traj_ta + a2 * traj_ta ** 2 + a3 * traj_ta ** 3 + a4 * traj_ta ** 4 + a5 * traj_ta ** 5
     fifth_vel = a1 + 2 * a2 * traj_ta + 3 * a3 * traj_ta ** 2 + 4 * a4 * traj_ta ** 3 + 5 * a5 * traj_ta ** 4
 
-    #halfway point of acceleration array (hp)
+    # halfway point of acceleration array (hp)
     hp = math.floor(len(fifth_pos) / 2)
     delta1 = abs(fifth_pos[0] - fifth_pos[hp])
-    #speed halfway (max speed)
+    # speed halfway (max speed)
     hv = fifth_vel[hp]
 
 
@@ -77,18 +80,25 @@ def spline_poly(q_i, q_f, q_in, ta, tt, ttopstop, tbotstop):
 
     #constant speed
     #tc is time at constant speed
-    delta3 = abs(q_i - q_f) - delta1 - delta2
-    if(delta3 < 0):
+    delta3 = abs((q_i - pba) - q_f) - delta1 - delta2
+    if (delta3 < 0):
         print("accel time and turnaround time too big")
 
     tc = delta3 / abs(hv)
 
     traj_tc = np.arange(0, tc, 0.004)
-    pc = fifth_pos[hp] + traj_tc*hv
+    pc = fifth_pos[hp] + traj_tc * hv
 
     # stall time at top / bottom
-    traj_top = np.ones(int(ttopstop / 0.004)) * q_i  # time stopped at top of trajectory, before strike
-    traj_bot = np.ones(int(tbotstop / 0.004)) * q_f  # time stopped at bottom of trajectory, after strike (half of the total time)
+    # traj_top = np.ones(int(ttopstop / 0.004)) * q_i  # time stopped at top of trajectory, before strike
+    # traj_top can be used for the pullback
+
+    traj_top = fifth_poly(q_i, q_i - pba, .5, 0, 0)
+    thp_pb = math.floor(len(traj_top) / 2)  # halfway point of turnaround traj
+    traj_top = traj_top[0:thp_pb]
+
+    traj_bot = np.ones(
+        int(tbotstop / 0.004)) * q_f  # time stopped at bottom of trajectory, after strike (half of the total time)
 
     ########### this code calculates the trajectory for the second half (the way up) #############
 
@@ -170,6 +180,7 @@ def fifth_poly(q_i, q_f, t, ttopstop, tbotstop):
     traj_pos = a0 + a1 * traj_t + a2 * traj_t ** 2 + a3 * traj_t ** 3 + a4 * traj_t ** 4 + a5 * traj_t ** 5
 
     traj_top = np.ones(int(ttopstop / 0.004)) * q_i #time stopped at top of trajectory, before strike
+
     traj_bot = np.ones(int(tbotstop / 0.004)) * q_f #time stopped at bottom of trajectory, after strike
 
     half_traj = np.concatenate((traj_top, traj_pos, traj_bot))
@@ -189,7 +200,7 @@ def drumbot(traj2, traj4, traj6, arm):
         #j_angles[4] = traj[i]
         #arms[numarm].set_servo_angle_j(angles=j_angles, is_radian=False)
         jointangles = [0,traj2[i],0,traj4[i],0,traj6[i],0]
-        print(traj2[i])
+        print(traj6[i])
         arms[arm].set_servo_angle_j(angles=jointangles, is_radian=False)
         while track_time < initial_time + 0.004:
             track_time = time.time()
@@ -275,8 +286,7 @@ if __name__ == '__main__':
     direction = 0 #0 is decreasing range of hit
     #notes = np.array([64, 60, 69, 55, 62])
 
-
-    arm0 = XArmAPI('192.168.1.236')
+    arm0 = XArmAPI('192.168.1.204')
 
     arms = [arm0]
     # arms = [arm1]
@@ -313,41 +323,59 @@ if __name__ == '__main__':
 
     x = 0
 
-
     while True:
+        # traj2 = spline_poly(IP[1], FP[1], IPN[1], .4 + x, .08, 0, 0, 0)
+        # traj4 = spline_poly(IP[3], FP[3], IPN[3], .32 + x, .08, .13, 0, 0)
+        # traj6 = spline_poly(IP[5], FP[5], IPN[5], .2 + x, .08, .35, 0, 10)
 
-        traj2 = spline_poly(IP[1], FP[1], IPN[1], .4 + x, .08, 0, 0)
-        traj4 = spline_poly(IP[3], FP[3], IPN[3], .32 + x, .08, .13, 0)
-        traj6 = spline_poly(IP[5], FP[5], IPN[5], .2 + x, .08, .35, 0)
+        # pull back 1 (line 96, time is 0.5)
 
-        plt.plot(np.arange(0, len(traj2)*0.004, 0.004), traj2, 'r', np.arange(0, len(traj4)*0.004, 0.004), traj4, 'b', np.arange(0, len(traj6)*0.004, 0.004), traj6, 'g')
-        #plt.show()
+        # traj2 = spline_poly(IP[1], FP[1], IPN[1], .4, .08, 0, 0, 20)
+        # traj4 = spline_poly(IP[3], FP[3], IPN[3], .32, .08, .13, .1, 0)
+        # traj6 = spline_poly(IP[5], FP[5], IPN[5], .2 , .08, .35, .1, 30)
+
+        # pull back 2
+
+        # traj2 = spline_poly(IP[1], FP[1], IPN[1], .4, .08, 0, 0, 30)
+        # traj4 = spline_poly(IP[3], FP[3], IPN[3], .32, .08, .13, .1, 0)
+        # traj6 = spline_poly(IP[5], FP[5], IPN[5], .2 , .08, .35, .1, 50)
+
+        # pull back 3
+
+        traj2 = spline_poly(IP[1], FP[1], IPN[1], .4, .08, 0, 0, 20)
+        traj4 = spline_poly(IP[3], FP[3], IPN[3], .32, .08, .13, .1, -10)
+        traj6 = spline_poly(IP[5], FP[5], IPN[5], .2, .08, .35, .1, 30)
+
+        plt.plot(np.arange(0, len(traj2) * 0.004, 0.004), traj2, 'r', np.arange(0, len(traj4) * 0.004, 0.004), traj4,
+                 'b', np.arange(0, len(traj6) * 0.004, 0.004), traj6, 'g')
+        plt.show()
 
         q0.put(1)
-        time.sleep(2.5 - x*30)
+        time.sleep(3.0)
 
-        for i in range(len(IPN)):
-            IP[i] = IPN[i]
+        # time.sleep(2.5 - x*30)
+        #
+        # for i in range(len(IPN)):
+        #     IP[i] = IPN[i]
+        #
+        # if IPN[1] > (FP[1] - 9):
+        #     direction = 1
+        #
+        # if IPN[1] < 23:
+        #     direction = 0
+        #
+        # if direction == 0: #smaller, softer
+        #     x = x +.01
+        #     FP[1] = FP[1] - 0.4
+        #     IPN[1] = IPN[1] + 3
+        #     IPN[3] = IPN[3] + 1
+        #     IPN[5] = IPN[5] + 3
+        # elif direction == 1:
+        #     x = x - .01
+        #     FP[1] = FP[1] + 0.4
+        #     IPN[1] = IPN[1] - 3
+        #     IPN[3] = IPN[3] - 1
+        #     IPN[5] = IPN[5] - 3
 
-        if IPN[1] > (FP[1] - 9):
-            direction = 1
-
-        if IPN[1] < 23:
-            direction = 0
-
-        if direction == 0: #smaller, softer
-            x = x +.01
-            FP[1] = FP[1] - 0.4
-            IPN[1] = IPN[1] + 3
-            IPN[3] = IPN[3] + 1
-            IPN[5] = IPN[5] + 3
-        elif direction == 1:
-            x = x - .01
-            FP[1] = FP[1] + 0.4
-            IPN[1] = IPN[1] - 3
-            IPN[3] = IPN[3] - 1
-            IPN[5] = IPN[5] - 3
-
-        #xArm0 = Thread(target=drummer, args=(q0, 0,))
+        # xArm0 = Thread(target=drummer, args=(q0, 0,))
         #xArm0.start()
-

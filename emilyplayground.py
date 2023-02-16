@@ -682,7 +682,7 @@ def strummer(inq, num):
             poseF = IPus[num]
             print(poseI)
             print(poseF)
-            newPos = poseToPose(poseI, poseF, 4)
+            newPos = poseToPose(poseI, poseF, 5)
             gotoPose(num, newPos)
             robomove(num, spintrajfirst)
 
@@ -899,9 +899,9 @@ if __name__ == '__main__':
     # q1.put(2)
     # input()
 
-    rtp_midi = RtpMidi(ROBOT, MyHandler(), PORT)
+    # rtp_midi = RtpMidi(ROBOT, MyHandler(), PORT)
     print("test")
-    rtp_midi.run()
+    # rtp_midi.run()
 
     # w/out rtp midi
     # while True:

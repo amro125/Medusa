@@ -43,7 +43,7 @@ class MyHandler(server.Handler):
                         strumtype = chn - 8
                         print(int(rob))
                         qList[int(rob)].put(strumtype)
-            if chn == 5: # this means its channel 11!!!!
+            if chn == 2:  # MIDI CHANNEL IN LOGIC IS 1 HIGHER THAN THIS NUMBER!!!!!
                 if command.command == 'note_on':
                     print(chn)
                     key = command.params.key.__int__()
@@ -51,7 +51,17 @@ class MyHandler(server.Handler):
                     rob = np.where(notes == key)[0]
                     # print(rob)
                     if len(rob) > 0:
-                        strumtype = velocity+5
+                        print(int(rob))
+                        qList[int(rob)].put(10)
+            if chn == 5:  # this means its channel 11!!!!
+                if command.command == 'note_on':
+                    print(chn)
+                    key = command.params.key.__int__()
+                    velocity = command.params.velocity
+                    rob = np.where(notes == key)[0]
+                    # print(rob)
+                    if len(rob) > 0:
+                        strumtype = velocity + 5
                         print("mode to ", velocity)
                         print(int(rob))
                         qList[int(rob)].put(strumtype)
@@ -162,7 +172,7 @@ def robomove(numarm, trajectory):
 def setup():
     for a in range(len(arms)):
         arms[a].set_simulation_robot(on_off=False)
-        arms[a].motion_enable(enable=True)
+        # arms[a].motion_enable(enable=True)
         arms[a].clean_warn()
         arms[a].clean_error()
         arms[a].set_mode(0)
@@ -214,7 +224,7 @@ def strumbot(numarm, traj):
 
 
 def prepGesture(numarm, traj):
-    pos = arms[numarm].angles()
+    pos = arms[numarm].angles
     j_angles = pos.copy()
     track_time = time.time()
     initial_time = time.time()
@@ -248,7 +258,7 @@ def strummer(inq,num):
         wave = positions.sintraj[num]
         circ = positions.circletraj[num]
     tension = fifth_poly(0, -20, 0.5)
-    release = fifth_poly(-20, 0, 0.75)
+    release = fifth_poly(0, 20, 0.75)
     strumMode = 1
 
     otherwave = positions.wtraj[num]
@@ -308,6 +318,8 @@ def strummer(inq,num):
             else:
                 play = inq.get()
                 newmode = int(play)
+                if newmode == 10:
+                    newmode = strumMode
                 if newmode != strumMode:
                     i = 0
                     tswitch = 1
@@ -317,7 +329,7 @@ def strummer(inq,num):
                         tswitch = 10
                     poseI = arms[num].angles
                     poseF = AllIP[newmode - 1][num]
-                    setp = poseToPose(poseI, poseF, 10)
+                    setp = poseToPose(poseI, poseF, 8)
                     gotoPose(num, setp)
                     strumMode = newmode
 
