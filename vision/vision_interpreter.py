@@ -181,6 +181,41 @@ with mp_holistic.Holistic(**mp_kwargs) as holistic:
             image_rows, image_cols, _ = image.shape
             movements = detect_hand_gesture(landmarks, "L")
 
+            if movements.get("front") and movements.get("upright"):
+                curr_time_twirl = datetime.now()
+                count_twirl = 0
+                print("start")
+                print(count_twirl)
+                if not movements.get("close"):
+                    count_wave += 1
+
+            if datetime.now() < curr_time_wave_f and count_wave >= 20:
+                if not waving:
+                    gesture = "wave_hello"
+                    print("wave detected: HI")
+                else:
+                    gesture = "wave_bye"
+                    print("wave detected: BYE")
+                waving = not waving
+                count_wave = 0
+                curr_time_wave = datetime.now()
+                curr_time_wave_f = curr_time_wave + timedelta(seconds = 5)
+            elif datetime.now() >= curr_time_wave_f:
+                curr_time_wave = datetime.now()
+                curr_time_wave_f = curr_time_wave + timedelta(seconds = 5)
+                count_wave = 0
+
+            if movements.get("back") and (curr_time_twirl + timedelta(seconds=1.0) > datetime.now()):
+                count_twirl += 1
+                print("counting")
+                print(count_twirl)
+
+            if count_twirl > 7:
+                count_twirl = 0
+                print("complete")
+                gesture = "twirl"
+                print(gesture)
+
             if gesture is not None:
                 # if gesture != prev_gesture:
                     # client.send_message("/gesture", gesture)
