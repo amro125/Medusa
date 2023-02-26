@@ -4,6 +4,11 @@ import time
 import math
 import positions
 
+global basesamp
+global usamp
+basesamp = 40
+usamp = 30
+
 
 def spline_poly(q_i, q_f, q_in, ta, tt, ttopstop, tbotstop):
     # qi is initial pos, qf is final pos (strike), qin is new initial (return pos)
@@ -136,6 +141,7 @@ def spline_poly(q_i, q_f, q_in, ta, tt, ttopstop, tbotstop):
 
 class XArmController:
     def __init__(self):
+        self.currentInitiaPos = None
         self.ROBOT = "xArms"
         self.PORT = 5004
 
@@ -173,7 +179,7 @@ class XArmController:
         self.FP4 = [30.1, 75.8, 21.9, 90.4, 94.8, -80.1, -31.5]
         # IP5 for doubles and triples
         self.IP5 = [0, 23.1, 0, 51.4, 0, -60.8, 0]
-        self.self.FP5 = [0.1, 48, 0.1, 60, 0.1, -12, 0.1]
+        self.FP5 = [0.1, 48, 0.1, 60, 0.1, -12, 0.1]
         # IP6 7 and 8 are for dynamics
         self.IP6 = [0, 33.1, 0, 53.4, 0, -55.8, 0]
         self.FP6 = [0.1, 47, 0.1, 60, 0.1, -12, 0.1]
@@ -207,7 +213,6 @@ class XArmController:
 
         # notes for strings
         self.notes = np.array([64, 60, 69, 55, 62])
-
         # drumnote nparray
         self.drumnotes = np.array([58, 59, 60, 61, 62, 63, 64, 65, 66, 67])
 
@@ -217,10 +222,29 @@ class XArmController:
         self.wavePos = []
 
         self.AllIP = [self.IP, positions.IPu, positions.IPs, positions.IPc]
-        self.IP = [self.IP0, self.IP1, self.IP2, self.IP3, self.IP4, self.DRUM1, self.DRUM2]
+        # self.IP = [self.IP1, self.IP2, self.IP3, self.IP4, self.IP5, self.DRUM1, self.DRUM2]
 
         self.delayarray = np.array([[0.15, 0.15, 0.15, 0.15, 0.15, 0.0, 0.0], [0.1, 0.15, 0.1, 0.15, 0.125, 0.0, 0.0]])
 
+        # Code from emily's playground script - need to test
+        self.IP0us = [-0.25 - basesamp / 2, 87.5 - usamp, -2, 126.5, 0, 51.7, -45]
+        self.IP1us = [2.67 - basesamp / 2, 86.32 - usamp, 0, 127.1, 0, 50.1, -45]  # [2.67 , 86.1, 0, 127.1, -strumD
+        # / 2, 50.1, -45]
+        self.IP2us = [1.3 - basesamp / 2, 81.8 - usamp, 0, 120, 0, 54.2, -45]
+        self.IP3us = [-1.4 - basesamp / 2, 83.95 - usamp, 0, 120, 0, 50.75, -45]  # [-0.2, 83.8, 0, 120, -strumD/2,
+        # 50.75, -45]
+        self.IP4us = [-1.8 - basesamp / 2, 81.88 - usamp, 0, 120, 0, 50.75, -45]
+        self.IPus = [self.IP0us, self.IP1us, self.IP2us, self.IP3us, self.IP4us]
+
+        # Overwriting previous IPs
+        self.IP0 = [-1, 87.1, -2, 126.5, -self.strumD / 2, 51.7, -45]
+        self.IP1 = [2.1, 86.3, 0, 127.1, -self.strumD / 2, 50.1, -45]
+        self.IP2 = [1.5, 81.6, 0.0, 120, -self.strumD / 2, 54.2, -45]
+        self.IP3 = [2.5, 81, 0, 117.7, -self.strumD / 2, 50.5, -45]
+        self.IP4 = [-1.6, 81.8, 0, 120, -self.strumD / 2, 50.65, -45]  # [-3.9, 65, 3.5, 100.3, -strumD/2, 42.7, 101.1]
+        self.DRUM1 = [0.0, 23.1, 0.0, 51.4, 0.0, -60.8, 0.0]  # DRUMMMING
+        self.DRUM2 = [0.0, 23.1, 0.0, 51.4, 0.0, -60.8, 0.0]  # DRUMMMING
+        self.IP = [self.IP0, self.IP1, self.IP2, self.IP3, self.IP4, self.DRUM1, self.DRUM2]
     def setup(self):
         '''
         Enable the arms and set them to the initial position.
@@ -563,24 +587,53 @@ class XArmController:
         tension = self.fifth_poly(0, -20, 0.5)
         release = self.fifth_poly(-20, 0, 0.75)
         strumMode = 0
+        spintrajfirst = positions.spintraj[num]
 
         while True:
-            newmode, play = inq.get()  # WHERE I AM GETTING A PLAY A NOT COMMAND
-            if newmode != strumMode:
-                i = 0
-                # posetoPose(,)
-            print("got!")
-            if play == 1:
-                direction = i % 2
-                time.sleep(self.delayarray[direction, num])  # time delay before playing
-                print(num)
-                print(self.delayarray[0, num])
-                self.strumbot(num, both[direction])
-                i += 1
-            elif play == 2:
-                self.prepGesture(num, tension)
-                time.sleep(0.25)
-                self.prepGesture(num, release)
+            # newmode, play = inq.get()  # WHERE I AM GETTING A PLAY A NOT COMMAND
+            # if newmode != strumMode:
+            #     i = 0
+            # posetoPose(,)
+            # print("got!")
+            # if play == 1:
+            #     direction = i % 2
+            #     time.sleep(self.delayarray[direction, num])  # time delay before playing
+            #     print(num)
+            #     print(self.delayarray[0, num])
+            #     self.strumbot(num, both[direction])
+            #     i += 1
+            # elif play == 2:
+            #     self.prepGesture(num, tension)
+            #     time.sleep(0.25)
+
+            #     self.prepGesture(num, release)
+
+            play = inq.get()
+
+            if play == "wave_hello":  # waving HI
+                poseI = self.arms[num].angles
+                poseF = self.WAVE[num]
+                print(poseI)
+                print(poseF)
+                newPos = self.poseToPose(poseI, poseF, 5)
+                self.gotoPose(num, newPos)
+
+            if play == "wave_bye":  # waving BYE
+                poseI = self.arms[num].angles
+                poseF = self.IP[num]
+                print(poseI)
+                print(poseF)
+                newPos = self.poseToPose(poseI, poseF, 5)
+                self.gotoPose(num, newPos)
+
+            if play == "twirl":  # twirl
+                poseI = self.arms[num].angles
+                poseF = self.IPus[num]
+                print(poseI)
+                print(poseF)
+                newPos = self.poseToPose(poseI, poseF, 5)
+                self.gotoPose(num, newPos)
+                self.robomove(num, spintrajfirst)
 
     def robomove(self, numarm, trajectory):
         track_time = time.time()
