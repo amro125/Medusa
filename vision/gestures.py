@@ -1,7 +1,10 @@
-import math
 import mediapipe as mp
 import numpy as np
 import cv2
+import math
+from datetime import datetime, timedelta
+import time
+from google.protobuf.json_format import MessageToDict
 
 hand_landmarks = {
     'thumb': [1, 2, 3, 4],
@@ -77,7 +80,27 @@ def calc_bounding_rect(image, landmarks):
     return [x, y, x + w, y + h]
 
 
-def detect_hand_gesture(landmarks):
+def detect_hand_gesture(landmarks, handedness):
+    """ Detect hand gesture """
+    if handedness == "R":
+        movements = {
+            'close': hand_close(landmarks),
+            'upright': hand_upright(landmarks),
+            'front': not hand_front(landmarks),
+            'back': not hand_back(landmarks)
+        }
+    else:
+        movements = {
+            'close': hand_close(landmarks),
+            'upright': hand_upright(landmarks),
+            'front': hand_front(landmarks),
+            'back': hand_back(landmarks)
+        }
+    print(movements)
+    return movements
+
+
+def hand_close(landmarks):
     """ Extract the x and y coordinates of the wrist landmarks """
     point = landmarks.landmark[6].y
     first_finger_is_open = landmarks.landmark[7].y < point and landmarks.landmark[8].y < point
@@ -91,29 +114,58 @@ def detect_hand_gesture(landmarks):
     point = landmarks.landmark[18].y
     fourth_finger_is_open = landmarks.landmark[19].y < point and landmarks.landmark[20].y < point
 
-    if first_finger_is_open or second_finger_is_open or third_finger_is_open or fourth_finger_is_open:
-        # return "Hand Open"
-        return 1
-    else:
-        # return "Hand Close"
-        return 2
-
-def detectUpright(hand_landmarks):
-    pointerDistance = math.sqrt((hand_landmarks.landmark[8].x - hand_landmarks.landmark[5].x)**2 + (hand_landmarks.landmark[8].y - hand_landmarks.landmark[5].y)**2)
-    middleDistance = math.sqrt((hand_landmarks.landmark[12].x - hand_landmarks.landmark[9].x)**2 + (hand_landmarks.landmark[12].y - hand_landmarks.landmark[9].y)**2)
-    ringDistance = math.sqrt((hand_landmarks.landmark[16].x - hand_landmarks.landmark[13].x)**2 + (hand_landmarks.landmark[16].y - hand_landmarks.landmark[13].y)**2)
-
-    pointerStraight = hand_landmarks.landmark[8].y < abs(hand_landmarks.landmark[5].y - pointerDistance*4/5)
-    middleStraight = hand_landmarks.landmark[12].y < abs(hand_landmarks.landmark[9].y - middleDistance*4/5)
-    ringStraight = hand_landmarks.landmark[16].y < abs(hand_landmarks.landmark[13].y - ringDistance*4/5)
-
-    if (pointerStraight and middleStraight and ringStraight):
+    if not (first_finger_is_open or second_finger_is_open or third_finger_is_open or fourth_finger_is_open):
         return True
     else:
         return False
 
-def detectFront(hand_landmarks):
-    if (hand_landmarks.landmark[17].x > hand_landmarks.landmark[13].x > hand_landmarks.landmark[9].x > hand_landmarks.landmark[5].x) and (hand_landmarks.landmark[18].x > hand_landmarks.landmark[14].x > hand_landmarks.landmark[10].x > hand_landmarks.landmark[6].x) and hand_landmarks.landmark[19].x > hand_landmarks.landmark[15].x > hand_landmarks.landmark[11].x > hand_landmarks.landmark[7].x and hand_landmarks.landmark[20].x > hand_landmarks.landmark[16].x > hand_landmarks.landmark[12].x > hand_landmarks.landmark[8].x:
+
+def hand_upright(landmarks):
+    pointer_distance = math.sqrt((landmarks.landmark[8].x - landmarks.landmark[5].x) ** 2 + (
+            landmarks.landmark[8].y - landmarks.landmark[5].y) ** 2)
+    middle_distance = math.sqrt((landmarks.landmark[12].x - landmarks.landmark[9].x) ** 2 + (
+            landmarks.landmark[12].y - landmarks.landmark[9].y) ** 2)
+    ring_distance = math.sqrt((landmarks.landmark[16].x - landmarks.landmark[13].x) ** 2 + (
+            landmarks.landmark[16].y - landmarks.landmark[13].y) ** 2)
+
+    pointer_straight = landmarks.landmark[8].y < abs(landmarks.landmark[5].y - pointer_distance * 4 / 5)
+    middle_straight = landmarks.landmark[12].y < abs(landmarks.landmark[9].y - middle_distance * 4 / 5)
+    ring_straight = landmarks.landmark[16].y < abs(landmarks.landmark[13].y - ring_distance * 4 / 5)
+
+    if pointer_straight and middle_straight and ring_straight:
         return True
     else:
         return False
+
+
+def hand_front(landmarks):
+    if (landmarks.landmark[17].x > landmarks.landmark[13].x > landmarks.landmark[9].x >
+        landmarks.landmark[5].x) and (
+            landmarks.landmark[18].x > landmarks.landmark[14].x > landmarks.landmark[10].x >
+            landmarks.landmark[6].x) and landmarks.landmark[19].x > landmarks.landmark[15].x > \
+            landmarks.landmark[11].x > landmarks.landmark[7].x and landmarks.landmark[20].x > \
+            landmarks.landmark[16].x > landmarks.landmark[12].x > landmarks.landmark[8].x:
+        return True
+    else:
+        return False
+
+
+def hand_back(landmarks):
+    if landmarks.landmark[17].x < landmarks.landmark[13].x < landmarks.landmark[9].x < landmarks.landmark[5].x:
+        return True
+    else:
+        return False
+
+
+def hand_twirl_end(landmarks):
+    if hand_back(landmarks) and (
+            is_near(landmarks.landmark[8], landmarks.landmark[12]) and is_near(landmarks.landmark[12],
+                                                                               landmarks.landmark[16]) and is_near(
+        landmarks.landmark[16], landmarks.landmark[20])) and (
+            landmarks.landmark[4].z > landmarks.landmark[8].z and landmarks.landmark[4].z > landmarks.landmark[12].z and
+            landmarks.landmark[4].z > landmarks.landmark[16].z):
+        return True
+
+
+def is_near(finger_one, finger_two):
+    return dist_xy([finger_one.x, finger_one.y], [finger_two.x, finger_two.y]) < .05
