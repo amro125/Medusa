@@ -226,8 +226,6 @@ def drummer(inq,num):
     # traj4 = fifth_poly(IP[3], FP[3], 1.25, .45, .054)
     # traj6 = fifth_poly(IP[5], FP[5], .75, 1, .004)
 
-
-
     # traj2 = spline_poly(IP[1], FP[1], .7, .08, .25, .254)
     # traj4 = spline_poly(IP[3], FP[3], .7, .08, .45, .054)
     # traj6 = spline_poly(IP[5], FP[5], .7, .08,  1, .004)
@@ -286,7 +284,7 @@ if __name__ == '__main__':
     direction = 0 #0 is decreasing range of hit
     #notes = np.array([64, 60, 69, 55, 62])
 
-    arm0 = XArmAPI('192.168.1.204')
+    arm0 = XArmAPI('192.168.1.236')
 
     arms = [arm0]
     # arms = [arm1]
@@ -342,13 +340,13 @@ if __name__ == '__main__':
 
         # pull back 3
 
-        traj2 = spline_poly(IP[1], FP[1], IPN[1], .4, .08, 0, 0, 20)
-        traj4 = spline_poly(IP[3], FP[3], IPN[3], .32, .08, .13, .1, -10)
-        traj6 = spline_poly(IP[5], FP[5], IPN[5], .2, .08, .35, .1, 30)
+        traj2 = spline_poly(IP[1], FP[1], IPN[1], .5, .08, 0, 0, 40)
+        traj4 = spline_poly(IP[3], FP[3], IPN[3], .42, .08, .13, .1, -10)
+        traj6 = spline_poly(IP[5], FP[5], IPN[5], .3, .08, .35, .1, 30)
 
         plt.plot(np.arange(0, len(traj2) * 0.004, 0.004), traj2, 'r', np.arange(0, len(traj4) * 0.004, 0.004), traj4,
                  'b', np.arange(0, len(traj6) * 0.004, 0.004), traj6, 'g')
-        plt.show()
+        # plt.show()
 
         q0.put(1)
         time.sleep(3.0)

@@ -12,11 +12,11 @@ def handler(address, *args):
     print("Received OSC message:", address, args)
     if address == "/gesture":
         if args[0] == "wave_hello":
-            q0.put("wave_hello")
+            q4.put("wave_hello")
         elif args[0] == "wave_bye":
-            q0.put("wave_bye")
+            q4.put("wave_bye")
         elif args[0] == "twirl":
-            q0.put("twirl")
+            q4.put("twirl")
         print(args[0])
 
 

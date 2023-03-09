@@ -628,6 +628,7 @@ class XArmController:
 
             if play == "twirl":  # twirl
                 poseI = self.arms[num].angles
+
                 poseF = self.IPus[num]
                 print(poseI)
                 print(poseF)
@@ -651,7 +652,6 @@ class XArmController:
         traj = []
         for p in range(len(poseI)):
             traj.append(self.fifth_poly(poseI[p], poseF[p], t))
-            print(p)
         return traj
 
     def gotoPose(self, numarm, traj):

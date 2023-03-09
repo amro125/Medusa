@@ -236,6 +236,7 @@ def prepGesture(numarm, traj):
         # print(j_angles)
         while track_time < initial_time + 0.004:
             track_time = time.time()
+
             time.sleep(0.0001)
         initial_time += 0.004
 
