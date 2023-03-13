@@ -89,16 +89,29 @@ def detect_hand_gesture(landmarks, handedness):
             'front': not hand_front(landmarks),
             'back': not hand_back(landmarks)
         }
-    else:
+    elif handedness == "L":
         movements = {
             'close': hand_close(landmarks),
             'upright': hand_upright(landmarks),
             'front': hand_front(landmarks),
             'back': hand_back(landmarks)
         }
-    print(movements)
+    elif handedness == "Both":
+        movements = {
+            'clap' : hand_clap(landmarks)
+        }
+    # print(movements)
     return movements
 
+def hand_clap(landmarks):
+    """ Detect hand clap """
+    left_wrist = [landmarks.left_hand_landmarks.landmark[0].x, landmarks.left_hand_landmarks.landmark[0].y]
+    right_write = [landmarks.right_hand_landmarks.landmark[0].x, landmarks.right_hand_landmarks.landmark[0].y]
+    distance = dist_xy(left_wrist, right_write)
+    if distance < 0.1:
+        return True
+    else:
+        return False
 
 def hand_close(landmarks):
     """ Extract the x and y coordinates of the wrist landmarks """
@@ -169,3 +182,27 @@ def hand_twirl_end(landmarks):
 
 def is_near(finger_one, finger_two):
     return dist_xy([finger_one.x, finger_one.y], [finger_two.x, finger_two.y]) < .05
+
+def detect_pose(landmarks):
+    """ Detect pose """
+    movements = {
+        'bow': pose_bow(landmarks)
+    }
+    # print(movements)
+    return movements
+
+def pose_bow(landmarks):
+    nose_y = landmarks.landmark[0].y
+    left_shoulder_y = landmarks.landmark[11].y
+    right_shoulder_y = landmarks.landmark[12].y
+
+    # Calculate the difference between nose y-coordinate and the average of the left and right shoulder y-coordinates
+    shoulder_y_avg = (left_shoulder_y + right_shoulder_y) / 2
+    diff = nose_y - shoulder_y_avg
+
+    # Check if the head is bowed down
+    if diff > 0.5:  # tweak this threshold to suit your needs
+        # print("Head bowed down!")
+        return True
+    else:
+        return False
