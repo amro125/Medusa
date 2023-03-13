@@ -20,6 +20,9 @@ from pythonosc.osc_server import BlockingOSCUDPServer
 import positions
 import socket
 
+global tracking_offset
+tracking_offset = 0
+
 
 class MyHandler(server.Handler):
 
@@ -94,25 +97,26 @@ class MyHandler(server.Handler):
                     # playDance(dances[velocity])
 
 
-def respondToWave(inout, inoli):
-    if inoli == 1:
-        q0.put(1)
-        q1.put(1)
-        q2.put(1)
-        q3.put(1)
-        q4.put(1)
-    elif inoli == 2:
+def respondToGesture(address, *args):
+    if args[0] == "wave_hello":
+        # q0.put(1)
+        poseI = arms[0].angles
+        poseF = [0.0, 0.0, 0.0, 90.0, 0.0, 0.0, 0.0]
+        newPos = poseToPose(poseI, poseF, 5)
+        gotoPose(0, newPos)
+        xArm1_Play.start()
+    elif args[0] == "wave_bye":
         q0.put(2)
-        q1.put(2)
-        q2.put(2)
-        q3.put(2)
-        q4.put(2)
-    elif inoli == 3:
+        # q1.put(2)
+        # q2.put(2)
+        # q3.put(2)
+        # q4.put(2)
+    elif args[0] == "twirl":
         q0.put(3)
-        q1.put(3)
-        q2.put(3)
-        q3.put(3)
-        q4.put(3)
+        # q1.put(3)
+        # q2.put(3)
+        # q3.put(3)
+        # q4.put(3)
 
 
 def robomove(numarm, trajectory):
@@ -690,29 +694,55 @@ def strummer(inq, num):
 
 def respondToHead(address, *args):
     if address == "/head":
-        x, y = args[0][0], args[0][1]
-        head_x.append(x)
-        head_y.append(y)
+        x1, y1, z1 = args[0], args[1], args[2]
+        x2, y2, z2 = args[3], args[4], args[5]
+        # print("Data", args[0], args[1])
+        head_x.append(x1)
+        head_y.append(y1)
+        head_z.append(z1)
+        shoulder_x.append(x2)
+        shoulder_y.append(y2)
+        shoulder_z.append(z2)
         if len(head_x) >= 5 and len(head_y) >= 5:
-            average_x = sum(head_x[-5:]) / 5
-            average_y = sum(head_y[-5:]) / 5
-            map_angle_q.put([average_x, average_y])
-            print(f"Smoothed value: {average_x, average_y}")
+            avg_head_x = sum(head_x[-5:]) / 5
+            avg_head_y = sum(head_y[-5:]) / 5
+            avg_head_z = sum(head_z[-5:]) / 5
+            avg_shoulder_x = sum(shoulder_x[-5:]) / 5
+            avg_shoulder_y = sum(shoulder_y[-5:]) / 5
+            avg_shoulder_z = sum(shoulder_z[-5:]) / 5
+            map_angle_q.put([avg_head_x, avg_head_y, avg_head_y, avg_shoulder_x, avg_shoulder_y, avg_shoulder_z])
+            # print(f"Smoothed value: {average_x, average_y}")
 
 
 def playArm(num, que):
+    global tracking_offset
     while True:
         data = que.get()
-        x, y = data[0], data[1]
-        j5 = np.interp(x, [0, 1], [-60, 60])
-        j6 = np.interp(y, [0, 1], [-70, 70])
+        x1, y1, z1 = data[0], data[1], data[2]
+        x2, y2, z2 = data[3], data[4], data[5]
+
+        if tracking_offset <= 300:
+            offset0 = x1
+            offset1 = y1
+            offset3 = y2
+            offset4 = x2
+
+        # j2 = np.interp(z1, [0.0, 1], [-70, 70])
+        j3 = np.interp(x2 - offset4, [-0.5, 0.5], [-30, 30])
+        j4 = np.interp(y2 - offset3, [-0.5, 0.5], [70, 120])
+        j5 = np.interp(x1 - offset0, [-0.5, 0.5], [-60, 60])
+        j6 = np.interp(y1 - offset1, [-0.5, 0.5], [-70, 70])
+        # print(f"{x1 - offset0} {y1 - offset1}")
 
         p = arms[num].angles
+        # p[1] = j2
+        p[2] = j3
+        p[3] = j4
         p[4] = j5
         p[5] = j6
-
+        print(f'{j3}')
         arms[num].set_servo_angle_j(angles=p, is_radian=False)
-
+        tracking_offset += 1
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
@@ -808,7 +838,8 @@ if __name__ == '__main__':
     print(positions.IPu)
     AllIP = [IP, positions.IPu, positions.IPs, positions.IPc]
 
-    arm0 = XArmAPI('192.168.1.208')
+    arm0 = XArmAPI('192.168.1.206')
+    # arm0 = XArmAPI('192.168.1.208')
     arm1 = XArmAPI('192.168.1.226')
     arm2 = XArmAPI('192.168.1.244')
     arm3 = XArmAPI('192.168.1.203')
@@ -875,20 +906,22 @@ if __name__ == '__main__':
     #     # input("NEX BOT")
 
     UDP_IP = "0.0.0.0"  # local IP
-    UDP_PORT = 5005  # port to retrieve data from Max
+    UDP_PORT = 12346  # port to retrieve data from Max
 
     dispatcher = dispatcher.Dispatcher()  # dispatcher to send
-    dispatcher.map("/wave", respondToWave)
+    dispatcher.map("/gesture", respondToGesture)
     dispatcher.map("/head", respondToHead)
 
     ######################################################
-    global head_x, head_y
     head_x = []
     head_y = []
+    head_z = []
+    shoulder_x = []
+    shoulder_y = []
+    shoulder_z = []
     map_angle_q = Queue()
-
-    xArm1_Play = Thread(target=playArm, args=(1, map_angle_q))  # num 4
-    xArm1_Play.start()
+    xArm1_Play = Thread(target=playArm, args=(0, map_angle_q))  # num 4
+    # xArm1_Play.start()
 
 
     def server():
