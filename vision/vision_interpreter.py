@@ -19,7 +19,7 @@ from enum import Enum
 from datetime import datetime, timedelta
 
 # UDP Client
-client = udp_client.SimpleUDPClient("192.168.2.2", 5005)
+client = udp_client.SimpleUDPClient("192.168.2.2", 12346)
 
 # Build Keypoint's using MP Holistic
 mp_drawing = mp.solutions.drawing_utils  # Drawing helpers
@@ -113,7 +113,8 @@ count_wave = 0
 curr_time_wave = datetime.now()
 curr_time_wave_f = curr_time_wave + timedelta(seconds = 5)
 waving = False
-
+count_clap = 0
+curr_time_clap = datetime.now()
 prev_gesture = ""
 gesture = ""
 
@@ -129,7 +130,32 @@ with mp_holistic.Holistic(**mp_kwargs) as holistic:
         image, results = mediapipe_detection(image, holistic)
         draw_landmarks(image, results)
 
-        if results.right_hand_landmarks:
+        if results.pose_landmarks:
+            movements = detect_pose(results.pose_landmarks)
+            if movements.get("bow"):
+                gesture = "bow"
+                print(gesture)
+            if gesture is not None:
+                if gesture != prev_gesture:
+                    client.send_message("/gesture", gesture)
+                    print('sent')
+                cv2.putText(image, str(gesture), (10, 140), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 2)
+            prev_gesture = gesture
+
+        if results.left_hand_landmarks and results.right_hand_landmarks:
+            image_rows, image_cols, _ = image.shape
+            movements = detect_hand_gesture(results, "Both")
+            if movements.get("clap"):
+                gesture = "clap"
+                print(gesture)
+            if gesture is not None:
+                if gesture != prev_gesture:
+                    client.send_message("/gesture", gesture)
+                    print('sent')
+                cv2.putText(image, str(gesture), (10, 140), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 2)
+            prev_gesture = gesture
+
+        elif results.right_hand_landmarks:
             landmarks = results.right_hand_landmarks
             image_rows, image_cols, _ = image.shape
             movements = detect_hand_gesture(landmarks, "R")
@@ -137,8 +163,8 @@ with mp_holistic.Holistic(**mp_kwargs) as holistic:
             if movements.get("front") and movements.get("upright"):
                 curr_time_twirl = datetime.now()
                 count_twirl = 0
-                print("start")
-                print(count_twirl)
+                # print("start")
+                # print(count_twirl)
                 if not movements.get("close"):
                     count_wave += 1
 
@@ -160,8 +186,8 @@ with mp_holistic.Holistic(**mp_kwargs) as holistic:
 
             if movements.get("back") and (curr_time_twirl + timedelta(seconds=1.0) > datetime.now()):
                 count_twirl += 1
-                print("counting")
-                print(count_twirl)
+                # print("counting")
+                # print(count_twirl)
 
             if count_twirl > 7:
                 count_twirl = 0
@@ -170,13 +196,14 @@ with mp_holistic.Holistic(**mp_kwargs) as holistic:
                 print(gesture)
 
             if gesture is not None:
-                # if gesture != prev_gesture:
-                    # client.send_message("/gesture", gesture)
+                if gesture != prev_gesture:
+                    client.send_message("/gesture", gesture)
+                    print('sent')
                 cv2.putText(image, str(gesture), (1700, 140), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
 
             prev_gesture = gesture
 
-        if results.left_hand_landmarks:
+        elif results.left_hand_landmarks:
             landmarks = results.left_hand_landmarks
             image_rows, image_cols, _ = image.shape
             movements = detect_hand_gesture(landmarks, "L")
@@ -184,8 +211,8 @@ with mp_holistic.Holistic(**mp_kwargs) as holistic:
             if movements.get("front") and movements.get("upright"):
                 curr_time_twirl = datetime.now()
                 count_twirl = 0
-                print("start")
-                print(count_twirl)
+                # print("start")
+                # print(count_twirl)
                 if not movements.get("close"):
                     count_wave += 1
 
@@ -207,18 +234,18 @@ with mp_holistic.Holistic(**mp_kwargs) as holistic:
 
             if movements.get("back") and (curr_time_twirl + timedelta(seconds=1.0) > datetime.now()):
                 count_twirl += 1
-                print("counting")
-                print(count_twirl)
+                # print("counting")
+                # print(count_twirl)
 
             if count_twirl > 7:
                 count_twirl = 0
-                print("complete")
+                # print("complete")
                 gesture = "twirl"
                 print(gesture)
 
             if gesture is not None:
-                # if gesture != prev_gesture:
-                    # client.send_message("/gesture", gesture)
+                if gesture != prev_gesture:
+                    client.send_message("/gesture", gesture)
                 cv2.putText(image, str(gesture), (10, 140), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
 
             prev_gesture = gesture
