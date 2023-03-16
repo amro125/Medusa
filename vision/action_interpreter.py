@@ -2,10 +2,13 @@ import cv2
 import mediapipe as mp
 import time
 from pythonosc import udp_client
+from gestures import *
 import numpy as np
+from datetime import datetime, timedelta
 
 # UDP Client
 client = udp_client.SimpleUDPClient("192.168.2.2", 12346)
+# client = udp_client.SimpleUDPClient("0.0.0.0", 12346)
 
 # Build Keypoint's using MP Holistic
 mp_drawing = mp.solutions.drawing_utils  # Drawing helpers
@@ -71,6 +74,15 @@ cap = cv2.VideoCapture(0)
 previousTime = 0
 currentTime = 0
 
+# Initialize gestures
+count_wave = 0
+curr_time_wave = datetime.now()
+curr_time_wave_f = curr_time_wave + timedelta(seconds = 5)
+waving = False
+
+prev_gesture = ""
+gesture = ""
+
 with mp_holistic.Holistic(**mp_kwargs) as holistic:
     while cap.isOpened():
         success, image = cap.read()
@@ -81,20 +93,48 @@ with mp_holistic.Holistic(**mp_kwargs) as holistic:
 
         image, results = mediapipe_detection(image, holistic)
         draw_styled_landmarks(image, results)
-        
-        if results.left_hand_landmarks or results.right_hand_landmarks:
-            # print("Hand Detected")
-            # client.send_message("/hand", 1)
-            continue
+
+        if results.right_hand_landmarks:
+            landmarks = results.right_hand_landmarks
+            image_rows, image_cols, _ = image.shape
+            movements = detect_hand_gesture(landmarks, "R")
+
+            if movements.get("front") and movements.get("upright") and not movements.get("close"):
+                    count_wave += 1
+
+            if datetime.now() < curr_time_wave_f and count_wave >= 20:
+                if not waving:
+                    gesture = "wave_hello"
+                    print("wave detected: HI")
+                else:
+                    gesture = "wave_bye"
+                    print("wave detected: BYE")
+                waving = not waving
+                count_wave = 0
+                curr_time_wave = datetime.now()
+                curr_time_wave_f = curr_time_wave + timedelta(seconds = 5)
+            elif datetime.now() >= curr_time_wave_f:
+                curr_time_wave = datetime.now()
+                curr_time_wave_f = curr_time_wave + timedelta(seconds = 5)
+                count_wave = 0
+
+            if gesture is not None:
+                if gesture != prev_gesture:
+                    client.send_message("/gesture", gesture)
+                cv2.putText(image, str(gesture), (1700, 140), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2)
+                prev_gesture = gesture
 
         if results.pose_landmarks is not None:
             landmarks = results.pose_landmarks.landmark
             head_x = landmarks[mp_holistic.PoseLandmark.NOSE.value].x
             head_y = landmarks[mp_holistic.PoseLandmark.NOSE.value].y
+            head_z = landmarks[mp_holistic.PoseLandmark.NOSE.value].z
             shoulder_x = (landmarks[mp_holistic.PoseLandmark.RIGHT_SHOULDER.value].x + landmarks[mp_holistic.PoseLandmark.LEFT_SHOULDER.value].x) / 2
             shoulder_y = (landmarks[mp_holistic.PoseLandmark.RIGHT_SHOULDER.value].y + landmarks[mp_holistic.PoseLandmark.LEFT_SHOULDER.value].y) / 2
-            client.send_message("/head", [head_x, head_y])
-            client.send_message("/shoulder", [shoulder_x, shoulder_y])
+            shoulder_z = (landmarks[mp_holistic.PoseLandmark.RIGHT_SHOULDER.value].z + landmarks[mp_holistic.PoseLandmark.LEFT_SHOULDER.value].z) / 2
+            if prev_gesture == 'wave_hello':
+                client.send_message("/head", [head_x, head_y, head_z, shoulder_x, shoulder_y, shoulder_z])
+                print("Head: ", head_x, head_y)
 
         # Calculating the FPS
         currentTime = time.time()
