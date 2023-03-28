@@ -1,122 +1,17 @@
 import atexit
+import csv
 import os
-import sys
-import threading
 import time
 import numpy as np
 import math
 
-from rtpmidi import RtpMidi
-from pymidi import server
 from queue import Queue
 from threading import Thread
 from xarm.wrapper import XArmAPI
-
-from pythonosc import udp_client
 from pythonosc import dispatcher
 from pythonosc import osc_server
-from pythonosc.osc_server import BlockingOSCUDPServer
 
 import positions
-import socket
-
-global tracking_offset
-tracking_offset = 0
-
-
-class MyHandler(server.Handler):
-
-    def on_peer_connected(self, peer):
-        # Handler for peer connected
-        print('Peer connected: {}'.format(peer))
-
-    def on_peer_disconnected(self, peer):
-        # Handler for peer disconnected
-        print('Peer disconnected: {}'.format(peer))
-
-    def on_midi_commands(self, peer, command_list):
-        # Handler for midi msgs
-        for command in command_list:
-            chn = command.channel
-            if chn == 1:  # this means its channel 2!!!!!
-                if command.command == 'note_on':
-                    print("YEYE START")
-
-            if chn == 2:  # this means its channel 3 !!!!!
-                if command.command == 'note_on':
-                    print("DRUMMO")
-                    key = command.params.key.__int__()
-                    velocity = command.params.velocity
-                    notetype = np.where(drumnotes == key)[0]
-                    if len(notetype) > 0:
-                        dq1.put([notetype, velocity])
-
-            if chn == 3:  # this means its channel 4 !!!!!
-                if command.command == 'note_on':
-                    print("DRUMMO2")
-                    key2 = command.params.key.__int__()
-                    velocity2 = command.params.velocity
-                    notetype2 = np.where(drumnotes == key2)[0]
-                    if len(notetype2) > 0:
-                        dq2.put([notetype2, velocity2])
-
-            if chn > 12 and chn < 16:  # MIDI CHANNEL IN LOGIC IS 1 HIGHER THAN THIS NUMBER!!!!!
-                if command.command == 'note_on':
-                    print(chn)
-                    key = command.params.key.__int__()
-                    velocity = command.params.velocity
-                    rob = np.where(notes == key)[0]
-                    # print(rob)
-                    if len(rob) > 0:
-                        strumtype = chn - 12
-                        print(int(rob))
-                        qList[int(rob)].put(strumtype)
-            if chn == 10:  # this means its channel 11!!!!
-                if command.command == 'note_on':
-                    print(chn)
-                    key = command.params.key.__int__()
-                    velocity = command.params.velocity
-                    rob = np.where(notes == key)[0]
-                    # print(rob)
-                    if len(rob) > 0:
-                        strumtype = velocity + 5
-                        print("mode to ", velocity)
-                        print(int(rob))
-                        qList[int(rob)].put(strumtype)
-
-            if chn == 11:  # this means its channel 12!!!!!
-                if command.command == 'note_on':
-                    # print(chn)
-                    key = command.params.key.__int__()
-                    velocity = command.params.velocity
-                    for q in qList:
-                        q.put(5)
-                    # print('key {} with velocity {}'.format(key, velocity))
-                    # q.put(velocity)
-
-                    # playDance(dances[velocity])
-
-
-def respondToGesture(address, *args):
-    if args[0] == "wave_hello":
-        # q0.put(1)
-        poseI = arms[0].angles
-        poseF = [0.0, 0.0, 0.0, 90.0, 0.0, 0.0, 0.0]
-        newPos = poseToPose(poseI, poseF, 5)
-        gotoPose(0, newPos)
-        xArm1_Play.start()
-    elif args[0] == "wave_bye":
-        q0.put(2)
-        # q1.put(2)
-        # q2.put(2)
-        # q3.put(2)
-        # q4.put(2)
-    elif args[0] == "twirl":
-        q0.put(3)
-        # q1.put(3)
-        # q2.put(3)
-        # q3.put(3)
-        # q4.put(3)
 
 
 def robomove(numarm, trajectory):
@@ -619,7 +514,7 @@ def drummer(inq, num):
                 traj7 = spline_poly(BIP1[6], BFP2[6], BIP1[6], .2, .08, 0.05, 0.32)
 
         # send trajectories to drumbot to perform (unless CP is not met)
-        if (CPpass == 1):
+        if CPpass == 1:
             drumbot(traj1, traj2, traj3, traj4, traj5, traj6, traj7, num)
             CPpass = 0
         else:
@@ -692,57 +587,119 @@ def strummer(inq, num):
             robomove(num, spintrajfirst)
 
 
-def respondToHead(address, *args):
+BUFFER_SIZE = 5
+
+
+def buffered_smooth(buffer_x, buffer_y, buffer_z, coordinates):
+    buffer_x.append(coordinates['x'])
+    buffer_y.append(coordinates['y'])
+    buffer_z.append(coordinates['z'])
+
+    if len(buffer_x) >= BUFFER_SIZE:
+        x = exponential_moving_average(buffer_x, 0.1)
+        y = exponential_moving_average(buffer_y, 0.1)
+        z = exponential_moving_average(buffer_z, 0.1)
+        return x, y, z
+    else:
+        return None
+
+
+def exponential_moving_average(values, alpha):
+    ema = [values[0]]
+    for value in values[1:]:
+        ema.append(alpha * value + (1 - alpha) * ema[-1])
+    return ema[-1]
+
+
+def save_vision_data(filename, timestamp, raw_values, smoothed_values):
+    row_data = [timestamp] + raw_values + smoothed_values
+    columns = ['timestamp', 'raw_head_x', 'raw_head_y', 'raw_head_z', 'raw_shoulder_x', 'raw_shoulder_y',
+               'raw_shoulder_z', 'smoothed_head_x', 'smoothed_head_y', 'smoothed_head_z', 'smoothed_shoulder_x',
+               'smoothed_shoulder_y', 'smoothed_shoulder_z']
+
+    # Check if the file exists
+    if not os.path.isfile(filename):
+        # Create a new file and write the header
+        with open(filename, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(columns)
+
+    # Append the data to the existing file
+    with open(filename, 'a', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(row_data)
+
+
+def save_joint_data(filename, timestamp, joint_angles):
+    if len(joint_angles) != 7:
+        raise ValueError("Joint angles list must have exactly 7 elements.")
+
+    with open(filename, 'a', newline='') as csvfile:
+        data_writer = csv.writer(csvfile, delimiter=',')
+        data_writer.writerow([timestamp,
+                              joint_angles[0], joint_angles[1], joint_angles[2], joint_angles[3],
+                              joint_angles[4], joint_angles[5], joint_angles[6]])
+
+
+global tracking_offset
+tracking_offset = 0
+
+
+def respond_to_gesture(address, *args):
+    if args[0] == "wave_hello":
+        poseI = arms[0].angles
+        poseF = [0.0, 0.0, 0.0, 90.0, 0.0, 0.0, 0.0]
+        newPos = poseToPose(poseI, poseF, 5)
+        gotoPose(0, newPos)
+        xArm1_Play.start()
+    elif args[0] == "wave_bye":
+        q0.put(2)
+    elif args[0] == "twirl":
+        q0.put(3)
+
+
+def respond_to_head(address, *args):
     if address == "/head":
-        x1, y1, z1 = args[0], args[1], args[2]
-        x2, y2, z2 = args[3], args[4], args[5]
-        # print("Data", args[0], args[1])
-        head_x.append(x1)
-        head_y.append(y1)
-        head_z.append(z1)
-        shoulder_x.append(x2)
-        shoulder_y.append(y2)
-        shoulder_z.append(z2)
-        if len(head_x) >= 5 and len(head_y) >= 5:
-            avg_head_x = sum(head_x[-5:]) / 5
-            avg_head_y = sum(head_y[-5:]) / 5
-            avg_head_z = sum(head_z[-5:]) / 5
-            avg_shoulder_x = sum(shoulder_x[-5:]) / 5
-            avg_shoulder_y = sum(shoulder_y[-5:]) / 5
-            avg_shoulder_z = sum(shoulder_z[-5:]) / 5
-            map_angle_q.put([avg_head_x, avg_head_y, avg_head_y, avg_shoulder_x, avg_shoulder_y, avg_shoulder_z])
-            # print(f"Smoothed value: {average_x, average_y}")
+        head = {'x': args[0], 'y': args[1], 'z': args[2]}
+        shoulder = {'x': args[3], 'y': args[4], 'z': args[5]}
 
+        smoothed_head = buffered_smooth(head_x, head_y, head_z, head)
+        smoothed_shoulder = buffered_smooth(shoulder_x, shoulder_y, shoulder_z, shoulder)
 
-def playArm(num, que):
+        if smoothed_head is not None and smoothed_shoulder is not None:
+            timestamp = time.time()
+            save_vision_data('vision_data.csv', timestamp, [head, shoulder], [smoothed_head, smoothed_shoulder])
+
+            map_angle_q.put([smoothed_head, smoothed_shoulder])
+
+def play_arm(num, que):
     global tracking_offset
     while True:
         data = que.get()
-        x1, y1, z1 = data[0], data[1], data[2]
-        x2, y2, z2 = data[3], data[4], data[5]
+        smoothed_head = data[0]
+        smoothed_shoulder = data[1]
 
         if tracking_offset <= 300:
-            offset0 = x1
-            offset1 = y1
-            offset3 = y2
-            offset4 = x2
+            offset0 = smoothed_head['x']
+            offset1 = smoothed_head['y']
+            offset3 = smoothed_shoulder['y']
+            offset4 = smoothed_shoulder['x']
 
-        # j2 = np.interp(z1, [0.0, 1], [-70, 70])
-        j3 = np.interp(x2 - offset4, [-0.5, 0.5], [-30, 30])
-        j4 = np.interp(y2 - offset3, [-0.5, 0.5], [70, 120])
-        j5 = np.interp(x1 - offset0, [-0.5, 0.5], [-60, 60])
-        j6 = np.interp(y1 - offset1, [-0.5, 0.5], [-70, 70])
-        # print(f"{x1 - offset0} {y1 - offset1}")
+        j3 = np.interp(smoothed_shoulder['x'] - offset4, [-0.5, 0.5], [-30, 30])
+        j4 = np.interp(smoothed_shoulder['y'] - offset3, [-0.5, 0.5], [70, 120])
+        j5 = np.interp(smoothed_head['x'] - offset0, [-0.5, 0.5], [-60, 60])
+        j6 = np.interp(smoothed_head['y'] - offset1, [-0.5, 0.5], [-70, 70])
 
         p = arms[num].angles
-        # p[1] = j2
         p[2] = j3
         p[3] = j4
         p[4] = j5
         p[5] = j6
-        print(f'{j3}')
+
+        save_joint_data('joint_data.csv', time.time(), p)
         arms[num].set_servo_angle_j(angles=p, is_radian=False)
         tracking_offset += 1
+
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
@@ -909,8 +866,8 @@ if __name__ == '__main__':
     UDP_PORT = 12346  # port to retrieve data from Max
 
     dispatcher = dispatcher.Dispatcher()  # dispatcher to send
-    dispatcher.map("/gesture", respondToGesture)
-    dispatcher.map("/head", respondToHead)
+    dispatcher.map("/gesture", respond_to_gesture)
+    dispatcher.map("/head", respond_to_head)
 
     ######################################################
     head_x = []
@@ -920,8 +877,7 @@ if __name__ == '__main__':
     shoulder_y = []
     shoulder_z = []
     map_angle_q = Queue()
-    xArm1_Play = Thread(target=playArm, args=(0, map_angle_q))  # num 4
-    # xArm1_Play.start()
+    xArm1_Play = Thread(target=play_arm, args=(0, map_angle_q))
 
 
     def server():
@@ -932,6 +888,3 @@ if __name__ == '__main__':
 
 
     server()
-
-    rtp_midi = RtpMidi(ROBOT, MyHandler(), PORT)
-    rtp_midi.run()
