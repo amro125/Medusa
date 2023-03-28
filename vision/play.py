@@ -596,10 +596,10 @@ def buffered_smooth(buffer_x, buffer_y, buffer_z, coordinates):
     buffer_z.append(coordinates['z'])
 
     if len(buffer_x) >= BUFFER_SIZE:
-        x = exponential_moving_average(buffer_x, 0.1)
-        y = exponential_moving_average(buffer_y, 0.1)
-        z = exponential_moving_average(buffer_z, 0.1)
-        return x, y, z
+        x = exponential_moving_average(buffer_x, 0.4)
+        y = exponential_moving_average(buffer_y, 0.4)
+        z = exponential_moving_average(buffer_z, 0.4)
+        return {'x': x, 'y': y, 'z': z}
     else:
         return None
 
@@ -634,6 +634,15 @@ def save_joint_data(filename, timestamp, joint_angles):
     if len(joint_angles) != 7:
         raise ValueError("Joint angles list must have exactly 7 elements.")
 
+    columns = ['timestamp', 'j1', 'j2', 'j3', 'j4', 'j5', 'j6', 'j7']
+
+    # Check if the file exists
+    if not os.path.isfile(filename):
+        # Create a new file and write the header
+        with open(filename, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(columns)
+
     with open(filename, 'a', newline='') as csvfile:
         data_writer = csv.writer(csvfile, delimiter=',')
         data_writer.writerow([timestamp,
@@ -652,6 +661,7 @@ def respond_to_gesture(address, *args):
         newPos = poseToPose(poseI, poseF, 5)
         gotoPose(0, newPos)
         xArm1_Play.start()
+        print("Tracking Dancer")
     elif args[0] == "wave_bye":
         q0.put(2)
     elif args[0] == "twirl":
@@ -676,19 +686,19 @@ def play_arm(num, que):
     global tracking_offset
     while True:
         data = que.get()
-        smoothed_head = data[0]
-        smoothed_shoulder = data[1]
+        head = data[0]
+        shoulder = data[1]
 
         if tracking_offset <= 300:
-            offset0 = smoothed_head['x']
-            offset1 = smoothed_head['y']
-            offset3 = smoothed_shoulder['y']
-            offset4 = smoothed_shoulder['x']
+            offset0 = head['x']
+            offset1 = head['y']
+            offset3 = shoulder['y']
+            offset4 = shoulder['x']
 
-        j3 = np.interp(smoothed_shoulder['x'] - offset4, [-0.5, 0.5], [-30, 30])
-        j4 = np.interp(smoothed_shoulder['y'] - offset3, [-0.5, 0.5], [70, 120])
-        j5 = np.interp(smoothed_head['x'] - offset0, [-0.5, 0.5], [-60, 60])
-        j6 = np.interp(smoothed_head['y'] - offset1, [-0.5, 0.5], [-70, 70])
+        j3 = np.interp(shoulder['x'] - offset4, [-0.5, 0.5], [-30, 30])
+        j4 = np.interp(shoulder['y'] - offset3, [-0.5, 0.5], [70, 120])
+        j5 = np.interp(head['x'] - offset0, [-0.5, 0.5], [-60, 60])
+        j6 = np.interp(head['y'] - offset1, [-0.5, 0.5], [-70, 70])
 
         p = arms[num].angles
         p[2] = j3
@@ -807,9 +817,9 @@ if __name__ == '__main__':
     # arms = [arm1]
     totalArms = len(arms)
     setup()
-    # input("lets go")
-    # setup2()
-    # input("letsgo again")
+    input("lets go")
+    setup2()
+    input("letsgo again")
     for a in arms:
         a.set_mode(1)
         a.set_state(0)
