@@ -650,10 +650,6 @@ def save_joint_data(filename, timestamp, joint_angles):
                               joint_angles[4], joint_angles[5], joint_angles[6]])
 
 
-global tracking_offset
-tracking_offset = 0
-
-
 def respond_to_gesture(address, *args):
     if args[0] == "wave_hello":
         poseI = arms[0].angles
@@ -662,13 +658,16 @@ def respond_to_gesture(address, *args):
         gotoPose(0, newPos)
         xArm1_Play.start()
         print("Tracking Dancer")
+
     elif args[0] == "wave_bye":
         q0.put(2)
+
     elif args[0] == "twirl":
         q0.put(3)
 
 
 def respond_to_head(address, *args):
+    global prev_angles, reset_offsets
     if address == "/head":
         head = {'x': args[0], 'y': args[1], 'z': args[2]}
         shoulder = {'x': args[3], 'y': args[4], 'z': args[5]}
@@ -679,21 +678,28 @@ def respond_to_head(address, *args):
         if smoothed_head is not None and smoothed_shoulder is not None:
             timestamp = time.time()
             save_vision_data('vision_data.csv', timestamp, [head, shoulder], [smoothed_head, smoothed_shoulder])
-
+            prev_angles = arms[0].angles.copy()
+            reset_offsets = True
             map_angle_q.put([smoothed_head, smoothed_shoulder])
 
+
 def play_arm(num, que):
-    global tracking_offset
+    global prev_angles, reset_offsets
+    transition_frames = 50
+    current_frame = 0
+
+    offset0, offset1, offset3, offset4 = 0, 0, 0, 0
     while True:
         data = que.get()
         head = data[0]
         shoulder = data[1]
 
-        if tracking_offset <= 300:
+        if reset_offsets:
             offset0 = head['x']
             offset1 = head['y']
             offset3 = shoulder['y']
             offset4 = shoulder['x']
+            reset_offsets = False
 
         j3 = np.interp(shoulder['x'] - offset4, [-0.5, 0.5], [-30, 30])
         j4 = np.interp(shoulder['y'] - offset3, [-0.5, 0.5], [70, 120])
@@ -701,14 +707,17 @@ def play_arm(num, que):
         j6 = np.interp(head['y'] - offset1, [-0.5, 0.5], [-70, 70])
 
         p = arms[num].angles
-        p[2] = j3
-        p[3] = j4
-        p[4] = j5
-        p[5] = j6
+        if current_frame < transition_frames and prev_angles is not None:
+            p = [np.interp(current_frame, [0, transition_frames], [prev, new]) for prev, new in zip(prev_angles, p)]
+            current_frame += 1
+        else:
+            p[2] = j3
+            p[3] = j4
+            p[4] = j5
+            p[5] = j6
 
-        save_joint_data('joint_data.csv', time.time(), p)
         arms[num].set_servo_angle_j(angles=p, is_radian=False)
-        tracking_offset += 1
+        # save_joint_data('joint_data.csv', time.time(), arms[num].angles)
 
 
 # Press the green button in the gutter to run the script.
